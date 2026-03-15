@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Typography, Card, Stepper, Step, StepLabel, Button, TextField, Grid, Snackbar, Alert, CircularProgress, Autocomplete } from '@mui/material';
+import { Box, Typography, Card, Stepper, Step, StepLabel, Button, TextField, Grid, Snackbar, Alert, CircularProgress, Autocomplete, Divider, Paper } from '@mui/material';
 import { Camera, QrCode, PenTool, CheckCircle, Package } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import axios from 'axios';
@@ -85,23 +85,26 @@ const CheckOut = () => {
     const [isScanning, setIsScanning] = useState(false);
 
     const stopScanner = useCallback(async () => {
-        if (scannerRef.current && (scannerRef.current.isScanning || isScanning)) {
+        if (scannerRef.current) {
             try {
-                await scannerRef.current.stop();
+                if (scannerRef.current.isScanning) {
+                    await scannerRef.current.stop();
+                }
                 scannerRef.current = null;
                 setIsScanning(false);
             } catch (err) {
                 console.error("Failed to stop scanner", err);
             }
         }
-    }, [isScanning]);
+    }, []);
 
     const handleScanSuccess = useCallback(async (scannedQrId) => {
         await stopScanner();
         setLoading(true);
         try {
             const aktifRes = await axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`);
-            const hasActiveLoan = aktifRes.data.data.find(l => l.nakhoda_id === scannedQrId || l.Nakhoda?.id === scannedQrId);
+            const activeLoans = aktifRes.data.data;
+            const hasActiveLoan = activeLoans.find(l => l.nakhoda_id === scannedQrId || l.Nakhoda?.id === scannedQrId);
             
             if (hasActiveLoan) {
                 setErrorMsg(`Nakhoda ${hasActiveLoan.Nakhoda?.nama_lengkap} masih memiliki peminjaman aktif. Silakan lakukan Check-In terlebih dahulu.`);
@@ -124,11 +127,9 @@ const CheckOut = () => {
     }, [stopScanner]);
 
     const startScanner = useCallback(async () => {
+        if (scannerRef.current) return; 
+
         try {
-            if (scannerRef.current) {
-                await stopScanner();
-            }
-            
             const html5QrCode = new Html5Qrcode("qr-reader");
             scannerRef.current = html5QrCode;
             setIsScanning(true);
@@ -147,13 +148,9 @@ const CheckOut = () => {
         } catch (err) {
             console.error("Unable to start scanning", err);
             setIsScanning(false);
+            scannerRef.current = null;
         }
-    }, [handleScanSuccess, stopScanner]);
-
-    // Update ref whenever startScanner changes
-    useEffect(() => {
-        startScannerRef.current = startScanner;
-    }, [startScanner]);
+    }, [handleScanSuccess]);
 
     useEffect(() => {
         if (activeStep === 0) {
@@ -166,6 +163,10 @@ const CheckOut = () => {
             stopScanner();
         };
     }, [activeStep, startScanner, stopScanner]);
+
+    useEffect(() => {
+        startScannerRef.current = startScanner;
+    }, [startScanner]);
 
     // Removal of redundant handleScanSuccess since it's now defined above within useCallback
 
@@ -187,6 +188,8 @@ const CheckOut = () => {
     };
 
     const handleOpenModal = (type) => {
+        if (!nakhodaData?.Kapal) return;
+        
         const maks = type === 'Dewasa' 
             ? Math.ceil(nakhodaData.Kapal.kapasitas_penumpang * 1.25) 
             : Math.ceil(nakhodaData.Kapal.kapasitas_penumpang * 0.10);
@@ -220,7 +223,7 @@ const CheckOut = () => {
 
             const payload = {
                 nakhoda_id: nakhodaData.id,
-                kapal_id: nakhodaData.Kapal.id,
+                kapal_id: nakhodaData?.Kapal?.id,
                 jaket_dewasa_ids: form.jaket_dewasa_ids,
                 jaket_anak_ids: form.jaket_anak_ids,
                 ttd_digital: dataURL
@@ -263,6 +266,12 @@ const CheckOut = () => {
                 {/* Step 1: Scan QR */}
                 {activeStep === 0 && (
                     <Box textAlign="center" maxWidth={500} mx="auto">
+                        <Box sx={{
+                            width: '100%', mb: 4, 
+                            border: '4px dashed', borderColor: 'primary.light', 
+                            borderRadius: '24px', overflow: 'hidden',
+                            bgcolor: 'rgba(0,99,156,0.05)', position: 'relative'
+                        }}>
                             <div id="qr-reader" style={{ width: '100%', minHeight: 400, border: 'none' }}></div>
                             
                             {/* Scanning Overlay Custom */}
@@ -312,6 +321,7 @@ const CheckOut = () => {
                                     <CircularProgress size={60} thickness={5} />
                                 </Box>
                             )}
+                        </Box>
 
                         <Typography variant="overline" color="text.secondary" fontWeight="bold">ATAU PENCARIAN MANUAL</Typography>
                         <Autocomplete
@@ -364,20 +374,20 @@ const CheckOut = () => {
                                         <Box p={1.5} bgcolor="primary.50" borderRadius="50%" color="primary.main"><Package size={24}/></Box>
                                         <Box>
                                             <Typography variant="subtitle1" fontWeight="bold">Jaket Dewasa</Typography>
-                                            <Typography variant="body2" color="text.secondary">Terpilih: <b>{form.jaket_dewasa_ids.length}</b> / {Math.ceil(nakhodaData.Kapal.kapasitas_penumpang * 1.25)} (Maks Kuota)</Typography>
-                                        </Box>
-                                    </Box>
-                                    <Button variant="contained" onClick={() => handleOpenModal('Dewasa')} sx={{ borderRadius: 10, px: 3, py: 1 }} color={form.jaket_dewasa_ids.length > 0 ? "success" : "primary"}>
-                                        {form.jaket_dewasa_ids.length > 0 ? <><CheckCircle size={18} style={{marginRight:8}}/>Ubah Pilihan</> : 'Pilih Jaket'}
-                                    </Button>
-                                </Card>
-
-                                <Card variant="outlined" sx={{ p: 2, mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 3, borderColor: form.jaket_anak_ids.length > 0 ? 'secondary.main' : 'divider' }}>
-                                    <Box display="flex" alignItems="center" gap={2}>
-                                        <Box p={1.5} bgcolor="secondary.50" borderRadius="50%" color="secondary.main"><Package size={24}/></Box>
-                                        <Box>
-                                            <Typography variant="subtitle1" fontWeight="bold">Jaket Anak</Typography>
-                                            <Typography variant="body2" color="text.secondary">Terpilih: <b>{form.jaket_anak_ids.length}</b> / {Math.ceil(nakhodaData.Kapal.kapasitas_penumpang * 0.10)} (Maks Kuota)</Typography>
+                                             <Typography variant="body2" color="text.secondary">Terpilih: <b>{form.jaket_dewasa_ids.length}</b> / {Math.ceil((nakhodaData?.Kapal?.kapasitas_penumpang || 0) * 1.25)} (Maks Kuota)</Typography>
+                                         </Box>
+                                     </Box>
+                                     <Button variant="contained" onClick={() => handleOpenModal('Dewasa')} sx={{ borderRadius: 10, px: 3, py: 1 }} color={form.jaket_dewasa_ids.length > 0 ? "success" : "primary"}>
+                                         {form.jaket_dewasa_ids.length > 0 ? <><CheckCircle size={18} style={{marginRight:8}}/>Ubah Pilihan</> : 'Pilih Jaket'}
+                                     </Button>
+                                 </Card>
+ 
+                                 <Card variant="outlined" sx={{ p: 2, mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 3, borderColor: form.jaket_anak_ids.length > 0 ? 'secondary.main' : 'divider' }}>
+                                     <Box display="flex" alignItems="center" gap={2}>
+                                         <Box p={1.5} bgcolor="secondary.50" borderRadius="50%" color="secondary.main"><Package size={24}/></Box>
+                                         <Box>
+                                             <Typography variant="subtitle1" fontWeight="bold">Jaket Anak</Typography>
+                                             <Typography variant="body2" color="text.secondary">Terpilih: <b>{form.jaket_anak_ids.length}</b> / {Math.ceil((nakhodaData?.Kapal?.kapasitas_penumpang || 0) * 0.10)} (Maks Kuota)</Typography>
                                         </Box>
                                     </Box>
                                     <Button variant="contained" onClick={() => handleOpenModal('Anak')} sx={{ borderRadius: 10, px: 3, py: 1 }} color={form.jaket_anak_ids.length > 0 ? "success" : "secondary"}>
@@ -411,7 +421,7 @@ const CheckOut = () => {
                             <Divider sx={{ mb: 3 }} />
 
                             <Typography variant="body1" sx={{ lineHeight: 1.8, color: 'text.primary', mb: 3 }}>
-                                Saya yang bertanda tangan di bawah ini, <strong>{nakhodaData.nama_lengkap}</strong>, selaku Nakhoda dari Kapal <strong>{nakhodaData.Kapal?.nama_kapal}</strong>, dengan ini menyatakan telah menerima pinjaman peralatan keselamatan berupa:
+                                Saya yang bertanda tangan di bawah ini, <strong>{nakhodaData?.nama_lengkap}</strong>, selaku Nakhoda dari Kapal <strong>{nakhodaData?.Kapal?.nama_kapal}</strong>, dengan ini menyatakan telah menerima pinjaman peralatan keselamatan berupa:
                             </Typography>
 
                             <Box sx={{ display: 'flex', gap: 4, mb: 4, bgcolor: 'primary.50', p: 2, borderRadius: 2 }}>
