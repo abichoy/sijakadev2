@@ -1,0 +1,187 @@
+
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <title>Kartu Identitas - Subair</title>
+            <style>
+                @media print {
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    body {
+                        background-color: transparent !important;
+                    }
+                }
+                *, *::before, *::after { box-sizing: border-box; }
+                body { 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    display: flex; justify-content: center; align-items: center; 
+                    height: 100vh; background-color: #f0f2f5; margin: 0; 
+                }
+                .kartu { 
+                    background: white; 
+                    width: 380px; 
+                    height: 640px;
+                    border-radius: 20px; 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+                    overflow: hidden; 
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                }
+                /* Wavy Header Background */
+                .header-bg {
+                    position: absolute;
+                    top: 0; left: 0; right: 0;
+                    height: 260px;
+                    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230277bd" fill-opacity="1" d="M0,96L80,112C160,128,320,160,480,154.7C640,149,800,107,960,112C1120,117,1280,171,1360,197.3L1440,224L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z"></path><path fill="%2329b6f6" fill-opacity="0.8" d="M0,224L80,213.3C160,203,320,181,480,181.3C640,181,800,203,960,192C1120,181,1280,139,1360,117.3L1440,96L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z"></path></svg>') no-repeat top center;
+                    background-size: cover;
+                    z-index: 1;
+                }
+                .header-title-container {
+                    position: relative;
+                    z-index: 2;
+                    margin-top: 35px;
+                    display: flex;
+                    justify-content: center;
+                }
+                .header-title {
+                    background: #0277bd;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 50px;
+                    font-size: 1.15rem;
+                    font-weight: 800;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                }
+                .foto-container {
+                    position: relative;
+                    z-index: 2;
+                    text-align: center;
+                    margin-top: 25px;
+                    display: flex;
+                    justify-content: center;
+                }
+                .foto-container img {
+                    width: 160px; 
+                    height: 160px; 
+                    border-radius: 50%; 
+                    object-fit: cover; 
+                    border: 8px solid #0277bd; 
+                    background-color: #b6e3f4;
+                    padding: 0;
+                }
+                .separator {
+                    width: 85%;
+                    height: 1px;
+                    background: #e0e0e0;
+                    margin: 25px auto 15px auto;
+                    z-index: 2;
+                }
+                .qr-section {
+                    text-align: center;
+                    z-index: 2;
+                }
+                .qr-section img {
+                    width: 140px; 
+                    height: 140px; 
+                }
+                .qr-section p {
+                    margin: 5px 0 0; 
+                    font-size: 0.95rem; 
+                    font-weight: normal;
+                    color: #000; 
+                }
+                .info-section {
+                    padding: 0 30px;
+                    z-index: 2;
+                    flex-grow: 1;
+                    margin-top: 5px;
+                }
+                .info-row {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+                .info-label {
+                    background-color: #0277bd;
+                    color: white;
+                    border-radius: 50px;
+                    padding: 8px 15px;
+                    font-weight: normal;
+                    width: 110px;
+                    text-align: right;
+                    font-size: 0.9rem;
+                    flex-shrink: 0;
+                }
+                .info-value {
+                    margin-left: 15px;
+                    font-weight: normal;
+                    color: #000;
+                    font-size: 1rem;
+                    flex-grow: 1;
+                    text-transform: uppercase;
+                }
+                .footer {
+                    background-color: #26538e;
+                    color: white;
+                    text-align: center;
+                    padding: 15px 10px;
+                    font-weight: bold;
+                    font-size: 0.85rem;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 8px;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="kartu">
+                <div class="header-bg"></div>
+                
+                <div class="header-title-container">
+                    <div class="header-title">KARTU IDENTITAS NAKHODA</div>
+                </div>
+                
+                <div class="foto-container">
+                    <img src="http://localhost:3000/uploads/1773505464193-324237209.jpg" alt="Foto Nakhoda">
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div class="qr-section">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAAA8AXHiAAAAAklEQVR4AewaftIAAAUUSURBVO3BUa5byZIEwfAC979lH33yJQSwcMRU3+4JM/wlVV92UrXgpGrBSdWCk6oFr/wGkJ9AzQ0gk5ongExqJiCTmieATGpuAPkJ1Lw7qVpwUrXgpGrBSdWCVy6p2QTkm4B8C5CngHyi5pvUbALyyUnVgpOqBSdVC06qFrzyB4A8peYJIDfUPAFkUjMBuaHmHZAJyA01TwB5Ss0TJ1ULTqoWnFQtOKla8Er9DzUTkBtAnlDzX3NSteCkasFJ1YKTqgWv/EcBmdS8AzKpmdRMQCY1E5BPgNxQ829xUrXgpGrBSdWCk6oFr/wBNT+Bmr9NzQ01/zQ1f9tJ1YKTqgUnVQteuQTk3wTIpOYJIJOaCcik5h2QSc0EZFJzA8g/7aRqwUnVgpOqBSdVC175DTX/JkAmNZuAPKFmAjKpuaHmJzqpWnBSteCkasFJ1YJXfgPIpGYCsknNpOYpIO/U3FBzA8gnQCY1E5BJzQRkk5onTqoWnFQtOKlacFK1AH/JAOSGmqeAvFMzAZnUTEAmNZ8AeUrNtwCZ1ExAvkXNDSA31Lw7qVpwUrXgpGrBSdWCVy6puQFkUvMJkKfUTEA+UTMBuQFkUvMJkEnNBGRScwPIE0AmNU+cVC04qVpwUrXgpGrBK5eATGomNROQT9RMQG4A2aRmArJJzQTkW4BMar7lpGrBSdWCk6oFr/wBIN8CZFIzAXlKzSdqJiA/lZoJyDs1N4BMap44qVpwUrXgpGrBSdUC/CUPAbmhZgLyTs0EZFLzFJB3ap4C8oSaCcg3qXkHZFKz6aRqwUnVgpOqBSdVC175DSA31ExAbqh5B+QpIJOav03NJ0AmNROQSc0E5FuA3FDzyUnVgpOqBSdVC06qFuAveQjIpGYC8omaG0CeUvMOyKRmAvKUmieATGpuAHlCzQRkUvPJSdWCk6oFJ1ULTqoW4C+5AOQpNZ8AuaHmBpBP1DwFZFIzAXlCzQRkUjMBeafmBpBJzRMnVQtOqhacVC04qVrwym8AuaHmKSDv1HyTmgnIJ0A2qZmA3FAzAZnUvAMyqZnUTEAmNZ+cVC04qVpwUrXglUtqJiCTmgnIJ0BuqPkJ1ExAJjXvgExqnlLziZoJyKTmBpBJzbuTqgUnVQtOqhacVC145cuAPKFmAvIUkE+A3FAzAbkB5J2ap4BMaiYg/7STqgUnVQtOqhacVC145cvU3ADyDsgNIJOaSc0E5J2aG0BuqPkEyKRmAnIDyBNqJiDfclK14KRqwUnVgpOqBfhL/kWATGqeADKpuQHkhpp3QJ5S8wSQG2q+5aRqwUnVgpOqBSdVC175DSA/gZpJzQTkb1NzA8g7NROQp4BMaj5RMwGZ1ExAJjXvTqoWnFQtOKlacFK14JVLajYBuQFkUvMEkBtAbqiZ1HyiZgJyQ80TQCY1E5BJzScnVQtOqhacVC145Q8AeUrNJiDfouYGkEnNOyCTmhtAvkXNBORbTqoWnFQtOKlacFK14JX/R9R8AuQpNZ+omYBMaiYgk5oJyDs1E5BJzQTkiZOqBSdVC06qFpxULXjlPwDIpOYTIJOaCcikZgIyqXkH5Ck1E5BJzTsgk5oJyLecVC04qVpwUrXgpGrBK39Azd+mZgIyAZnUvFMzAbkBZBOQp4A8oeZbTqoWnFQtOKlacFK14JVLQH4CIJOaG0C+Rc23qPkmIO/U3AByQ80nJ1ULTqoWnFQtOKlagL+k6stOqhacVC04qVrwf+UrQl4Z7HETAAAAAElFTkSuQmCC" alt="QR Code">
+                    <p>ID : 424BBAFF</p>
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div class="info-section">
+                    <div class="info-row">
+                        <div class="info-label">NAMA :</div>
+                        <div class="info-value">Subair</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">KAPAL :</div>
+                        <div class="info-value">ANUGRAH ILAHI</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">KONTAK :</div>
+                        <div class="info-value">08123434343</div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                    KANTOR UPP KELAS II MACCINI BAJI
+                </div>
+            </div>
+        </body>
+        </html>
+        
