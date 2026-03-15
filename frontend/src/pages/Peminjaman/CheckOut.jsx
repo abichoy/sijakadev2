@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Box, Typography, Card, Stepper, Step, StepLabel, Button, TextField, Grid, Snackbar, Alert, CircularProgress, Autocomplete } from '@mui/material';
 import { Camera, QrCode, PenTool, CheckCircle, Package } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import axios from 'axios';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import JaketSelectorModal from './JaketSelectorModal';
 
 const komitmenHtml = `<hr>
@@ -80,32 +80,36 @@ const CheckOut = () => {
         fetchAllNakhoda();
     }, []);
 
-    useEffect(() => {
-        let scanner = null;
-        if (activeStep === 0) {
-            scanner = new Html5QrcodeScanner("qr-reader", { 
-                qrbox: { width: 250, height: 250 }, 
-                fps: 5 
-            }, false);
+    const scannerRef = useRef(null);
+    const startScannerRef = useRef(null);
+    const [isScanning, setIsScanning] = useState(false);
 
-            scanner.render(
-                (decodedText) => {
-                    if (scanner) scanner.clear();
-                    handleScanSuccess(decodedText);
-                },
-                (err) => { /* ignore */ }
-            );
-        }
-        return () => {
-            if (scanner) {
-                scanner.clear().catch(e => console.error(e));
+    const stopScanner = useCallback(async () => {
+        if (scannerRef.current && (scannerRef.current.isScanning || isScanning)) {
+            try {
+                await scannerRef.current.stop();
+                scannerRef.current = null;
+                setIsScanning(false);
+            } catch (err) {
+                console.error("Failed to stop scanner", err);
             }
-        };
-    }, [activeStep]);
+        }
+    }, [isScanning]);
 
-    const handleScanSuccess = async (scannedQrId) => {
+    const handleScanSuccess = useCallback(async (scannedQrId) => {
+        await stopScanner();
         setLoading(true);
         try {
+            const aktifRes = await axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`);
+            const hasActiveLoan = aktifRes.data.data.find(l => l.nakhoda_id === scannedQrId || l.Nakhoda?.id === scannedQrId);
+            
+            if (hasActiveLoan) {
+                setErrorMsg(`Nakhoda ${hasActiveLoan.Nakhoda?.nama_lengkap} masih memiliki peminjaman aktif. Silakan lakukan Check-In terlebih dahulu.`);
+                setLoading(false);
+                if (startScannerRef.current) startScannerRef.current(); 
+                return;
+            }
+
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda/by-qr/${scannedQrId}`);
             if (res?.data?.success) {
                 setNakhodaData(res.data.data);
@@ -113,10 +117,57 @@ const CheckOut = () => {
             }
         } catch (error) {
             setErrorMsg(error.response?.data?.message || 'Data Nakhoda berdasarkan QR tidak ditemukan.');
+            if (startScannerRef.current) startScannerRef.current(); 
         } finally {
             setLoading(false);
         }
-    };
+    }, [stopScanner]);
+
+    const startScanner = useCallback(async () => {
+        try {
+            if (scannerRef.current) {
+                await stopScanner();
+            }
+            
+            const html5QrCode = new Html5Qrcode("qr-reader");
+            scannerRef.current = html5QrCode;
+            setIsScanning(true);
+
+            await html5QrCode.start(
+                { facingMode: "environment" }, 
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                },
+                (decodedText) => {
+                    handleScanSuccess(decodedText);
+                },
+                () => { /* silent */ }
+            );
+        } catch (err) {
+            console.error("Unable to start scanning", err);
+            setIsScanning(false);
+        }
+    }, [handleScanSuccess, stopScanner]);
+
+    // Update ref whenever startScanner changes
+    useEffect(() => {
+        startScannerRef.current = startScanner;
+    }, [startScanner]);
+
+    useEffect(() => {
+        if (activeStep === 0) {
+            startScanner();
+        } else {
+            stopScanner();
+        }
+        
+        return () => {
+            stopScanner();
+        };
+    }, [activeStep, startScanner, stopScanner]);
+
+    // Removal of redundant handleScanSuccess since it's now defined above within useCallback
 
     const handleProceedManual = () => {
         if (!selectedManualNakhoda) {
@@ -212,15 +263,55 @@ const CheckOut = () => {
                 {/* Step 1: Scan QR */}
                 {activeStep === 0 && (
                     <Box textAlign="center" maxWidth={500} mx="auto">
-                        <Box sx={{
-                            width: '100%', mb: 4, 
-                            border: '4px dashed', borderColor: 'primary.light', 
-                            borderRadius: '24px', overflow: 'hidden',
-                            bgcolor: 'rgba(0,99,156,0.05)', position: 'relative'
-                        }}>
-                            <div id="qr-reader" style={{ width: '100%', minHeight: 400 }}></div>
-                            {loading && <CircularProgress sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />}
-                        </Box>
+                            <div id="qr-reader" style={{ width: '100%', minHeight: 400, border: 'none' }}></div>
+                            
+                            {/* Scanning Overlay Custom */}
+                            {!loading && isScanning && (
+                                <Box sx={{ 
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+                                    pointerEvents: 'none', display: 'flex', flexDirection: 'column', 
+                                    alignItems: 'center', justifyContent: 'center' 
+                                }}>
+                                    <Box sx={{ 
+                                        width: 260, height: 260, 
+                                        border: '2px solid rgba(249, 115, 22, 0.5)', 
+                                        borderRadius: '20px',
+                                        boxShadow: '0 0 0 1000px rgba(0,0,0,0.3)',
+                                        position: 'relative',
+                                        '&::before': {
+                                            content: '""', position: 'absolute', top: -10, left: -10, width: 40, height: 40, borderLeft: '4px solid #f97316', borderTop: '4px solid #f97316'
+                                        },
+                                        '&::after': {
+                                            content: '""', position: 'absolute', bottom: -10, right: -10, width: 40, height: 40, borderRight: '4px solid #f97316', borderBottom: '4px solid #f97316'
+                                        }
+                                    }}>
+                                        <Box sx={{ 
+                                            position: 'absolute', top: '50%', left: '10%', right: '10%', height: '2px', 
+                                            bgcolor: '#f97316', boxShadow: '0 0 15px #f97316',
+                                            animation: 'scan 2s infinite ease-in-out'
+                                        }} />
+                                    </Box>
+                                    <Typography variant="body2" sx={{ mt: 4, color: 'white', fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.6)', px: 2, py: 1, borderRadius: 2 }}>
+                                        Posisikan QR Code di Dalam Kotak
+                                    </Typography>
+
+                                    <style>{`
+                                        @keyframes scan {
+                                            0%, 100% { transform: translateY(-110px); }
+                                            50% { transform: translateY(110px); }
+                                        }
+                                        #qr-reader video { object-fit: cover !important; }
+                                        #qr-reader img { display: none !important; }
+                                        #qr-reader__dashboard { display: none !important; }
+                                    `}</style>
+                                </Box>
+                            )}
+                            
+                            {loading && (
+                                <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                                    <CircularProgress size={60} thickness={5} />
+                                </Box>
+                            )}
 
                         <Typography variant="overline" color="text.secondary" fontWeight="bold">ATAU PENCARIAN MANUAL</Typography>
                         <Autocomplete
@@ -306,27 +397,63 @@ const CheckOut = () => {
                 {/* Step 3: Signature */}
                 {activeStep === 2 && (
                     <Box textAlign="center">
-                        <Typography variant="h6" fontWeight={800} mb={2}>Pernyataan dan Komitmen Tanggung Jawab Nakhoda</Typography>
-                        <Typography component="div" variant="body2" color="text.secondary" mb={4} sx={{ textAlign: 'left', p: 2, bgcolor: 'primary.50', borderRadius: 2, border: '1px solid', borderColor: 'primary.100', fontSize: '0.875rem' }}>
-                            <Box mb={2}>
-                                Saya, <strong>{nakhodaData.nama_lengkap}</strong>, nakhoda kapal <strong>{nakhodaData.Kapal?.nama_kapal}</strong>, menyetujui peminjaman <strong>{form.jaket_dewasa_ids.length}</strong> jaket dewasa dan <strong>{form.jaket_anak_ids.length}</strong> jaket anak dan akan mengembalikannya dalam keadaan baik.
+                        <Paper elevation={0} sx={{ p: 4, mb: 4, border: '1px solid', borderColor: 'divider', borderRadius: 4, bgcolor: '#fff', textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
+                            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 6, bgcolor: 'primary.main' }} />
+                            
+                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
+                                <Box>
+                                    <Typography variant="h5" fontWeight={900} letterSpacing={-0.5} gutterBottom>Surat Pernyataan Komitmen</Typography>
+                                    <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ textTransform: 'uppercase' }}>Duta Keselamatan Maritim - SiJaka</Typography>
+                                </Box>
+                                <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40, opacity: 0.8 }} />
                             </Box>
-                            <Box dangerouslySetInnerHTML={{ __html: komitmenHtml }} />
-                        </Typography>
 
-                        <Box sx={{ border: '2px solid #e2e8f0', borderRadius: '16px', bgcolor: 'whitesmoke', mb: 3, overflow: 'hidden' }}>
+                            <Divider sx={{ mb: 3 }} />
+
+                            <Typography variant="body1" sx={{ lineHeight: 1.8, color: 'text.primary', mb: 3 }}>
+                                Saya yang bertanda tangan di bawah ini, <strong>{nakhodaData.nama_lengkap}</strong>, selaku Nakhoda dari Kapal <strong>{nakhodaData.Kapal?.nama_kapal}</strong>, dengan ini menyatakan telah menerima pinjaman peralatan keselamatan berupa:
+                            </Typography>
+
+                            <Box sx={{ display: 'flex', gap: 4, mb: 4, bgcolor: 'primary.50', p: 2, borderRadius: 2 }}>
+                                <Box>
+                                    <Typography variant="caption" color="primary.main" fontWeight="extrabold">JAKET DEWASA</Typography>
+                                    <Typography variant="h6" fontWeight={900}>{form.jaket_dewasa_ids.length} Unit</Typography>
+                                </Box>
+                                <Divider orientation="vertical" flexItem />
+                                <Box>
+                                    <Typography variant="caption" color="secondary.main" fontWeight="extrabold">JAKET ANAK</Typography>
+                                    <Typography variant="h6" fontWeight={900}>{form.jaket_anak_ids.length} Unit</Typography>
+                                </Box>
+                            </Box>
+
+                            <Typography component="div" variant="body2" sx={{ maxHeight: 300, overflowY: 'auto', pr: 1, color: 'text.secondary', fontStyle: 'italic', bgcolor: 'grey.50', p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                                <Box dangerouslySetInnerHTML={{ __html: komitmenHtml }} />
+                            </Typography>
+                        </Paper>
+
+                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>TANDA TANGAN DIGITAL NAKHODA</Typography>
+                        <Box sx={{ border: '2px solid', borderColor: 'divider', borderRadius: '24px', bgcolor: '#fff', mb: 2, overflow: 'hidden', position: 'relative' }}>
                             <SignatureCanvas 
                                 penColor="black"
-                                canvasProps={{ width: 500, height: 200, className: 'sigCanvas' }} 
+                                canvasProps={{ width: 800, height: 260, className: 'sigCanvas' }} 
                                 ref={sigPad}
                             />
+                            <Button 
+                                size="small" 
+                                color="error"
+                                onClick={() => sigPad.current.clear()} 
+                                sx={{ position: 'absolute', bottom: 16, right: 16, borderRadius: 10, bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)', fontWeight: 'bold' }} 
+                                startIcon={<PenTool size={14}/>}
+                            >
+                                Ulangi
+                            </Button>
                         </Box>
-                        <Button size="small" variant="text" onClick={() => sigPad.current.clear()} sx={{ mb: 4 }} startIcon={<PenTool size={16}/>}>Bersihkan Tanda Tangan</Button>
+                        <Typography variant="caption" color="text.secondary">Gunakan mouse atau layar sentuh untuk menandatangani</Typography>
 
-                        <Box display="flex" gap={2} justifyContent="center" mt={2}>
-                            <Button variant="outlined" onClick={handleBack} sx={{ borderRadius: '12px', px: 4, fontWeight: 'bold' }}>Batal</Button>
-                            <Button variant="contained" color="success" onClick={handleSubmitCheckout} disabled={loading} sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 'extrabold', fontSize: '1.1rem' }}>
-                                {loading ? 'Memproses...' : 'Proses Peminjaman'}
+                        <Box display="flex" gap={2} justifyContent="center" mt={6}>
+                            <Button variant="outlined" size="large" onClick={handleBack} sx={{ borderRadius: '16px', px: 6, fontWeight: 'bold', minWidth: 160 }}>Kembali</Button>
+                            <Button variant="contained" size="large" color="success" onClick={handleSubmitCheckout} disabled={loading} sx={{ borderRadius: '16px', px: 6, py: 2, fontWeight: '900', fontSize: '1.2rem', minWidth: 240, boxShadow: '0 8px 20px rgba(34, 197, 94, 0.3)' }}>
+                                {loading ? 'Memproses...' : 'KONFIRMASI LOAN'}
                             </Button>
                         </Box>
                     </Box>
