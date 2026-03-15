@@ -24,7 +24,7 @@ const Inventaris = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/inventaris`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/inventaris`);
             if (response.data.success) {
                 setData(response.data.data);
             }
@@ -55,10 +55,10 @@ const Inventaris = () => {
     const handleSave = async () => {
         try {
             if (editMode) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/inventaris/${formData.id}`, formData);
+                await axios.put(`${import.meta.env.VITE_API_URL}/inventaris/${formData.id}`, formData);
             } else {
                 const { id: _, ...payload } = formData;
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/inventaris`, payload);
+                await axios.post(`${import.meta.env.VITE_API_URL}/inventaris`, payload);
             }
             handleClose();
             fetchData();
@@ -71,7 +71,7 @@ const Inventaris = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Yakin ingin menghapus data ini?')) {
             try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/inventaris/${id}`);
+                await axios.delete(`${import.meta.env.VITE_API_URL}/inventaris/${id}`);
                 fetchData();
             } catch (error) {
                 console.error('Error deleting data:', error);

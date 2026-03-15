@@ -35,9 +35,9 @@ const Laporan = () => {
                 const config = { headers: { Authorization: `Bearer ${token}` } };
                 
                 const [resKepa, resNakh, resInv] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/peminjaman/aktif`, config).catch(() => ({data:{data:[]}})),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/nakhoda`, config).catch(() => ({data:{data:[]}})),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/inventaris`, config).catch(() => ({data:{data:[]}}))
+                    axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`, config).catch(() => ({data:{data:[]}})),
+                    axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, config).catch(() => ({data:{data:[]}})),
+                    axios.get(`${import.meta.env.VITE_API_URL}/inventaris`, config).catch(() => ({data:{data:[]}}))
                 ]);
 
                 if (resKepa.data.data) setKepatuhan(resKepa.data.data);

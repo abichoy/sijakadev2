@@ -11,7 +11,7 @@ const Kapal = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/kapal`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/kapal`);
             if (response.data.success) {
                 setData(response.data.data);
             }
@@ -42,10 +42,10 @@ const Kapal = () => {
     const handleSave = async () => {
         try {
             if (editMode) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/kapal/${formData.id}`, formData);
+                await axios.put(`${import.meta.env.VITE_API_URL}/kapal/${formData.id}`, formData);
             } else {
                 const { id, ...payload } = formData;
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/kapal`, payload);
+                await axios.post(`${import.meta.env.VITE_API_URL}/kapal`, payload);
             }
             handleClose();
             fetchData();
@@ -58,7 +58,7 @@ const Kapal = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Yakin ingin menghapus data ini?')) {
             try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/kapal/${id}`);
+                await axios.delete(`${import.meta.env.VITE_API_URL}/kapal/${id}`);
                 fetchData();
             } catch (error) {
                 console.error('Error deleting data:', error);

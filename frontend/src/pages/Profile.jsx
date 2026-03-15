@@ -69,7 +69,7 @@ const Profile = () => {
             if (newPwd) formData.append('new_password', newPwd);
             if (avatarFile) formData.append('avatar', avatarFile);
 
-            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, formData, {
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/auth/profile`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'

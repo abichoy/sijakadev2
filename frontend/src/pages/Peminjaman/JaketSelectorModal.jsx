@@ -20,7 +20,7 @@ const JaketSelectorModal = ({ open, onClose, onSave, maxLimit, typeLabel, preSel
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/inventaris`, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/inventaris`, { headers: { Authorization: `Bearer ${token}` } });
             
             if (res.data?.success) {
                 // Filter yang sesuai tipe (anak/dewasa) dan yang statusnya sedang 'baik'

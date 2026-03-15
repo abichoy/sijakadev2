@@ -24,10 +24,10 @@ const Nakhoda = () => {
 
     const fetchData = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/nakhoda`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`);
             if (res.data.success) setData(res.data.data);
             
-            const kRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/kapal`);
+            const kRes = await axios.get(`${import.meta.env.VITE_API_URL}/kapal`);
             if (kRes.data.success) setKapalList(kRes.data.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -101,10 +101,10 @@ const Nakhoda = () => {
             const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editMode) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/nakhoda/${formData.id}`, formDataToSend, config);
+                await axios.put(`${import.meta.env.VITE_API_URL}/nakhoda/${formData.id}`, formDataToSend, config);
                 setSnackbar({ open: true, message: 'Data berhasil diperbarui', severity: 'success' });
             } else {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/nakhoda`, formDataToSend, config);
+                await axios.post(`${import.meta.env.VITE_API_URL}/nakhoda`, formDataToSend, config);
                 setSnackbar({ open: true, message: 'Data berhasil ditambahkan', severity: 'success' });
             }
             handleClose();
@@ -121,7 +121,7 @@ const Nakhoda = () => {
 
     const confirmDelete = async () => {
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/nakhoda/${deleteDialog.id}`);
+            await axios.delete(`${import.meta.env.VITE_API_URL}/nakhoda/${deleteDialog.id}`);
             setDeleteDialog({ open: false, id: null });
             fetchData();
             setSnackbar({ open: true, message: 'Data berhasil dihapus', severity: 'success' });
@@ -134,7 +134,7 @@ const Nakhoda = () => {
     const handlePrintKartu = async (id) => {
         try {
             setSnackbar({ open: true, message: 'Menyiapkan dokumen cetak...', severity: 'info' });
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/nakhoda/${id}/kartu`, { responseType: 'text' });
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda/${id}/kartu`, { responseType: 'text' });
             
             let printIframe = document.getElementById('print-iframe');
             if (!printIframe) {

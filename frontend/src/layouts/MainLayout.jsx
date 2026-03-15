@@ -91,7 +91,7 @@ const MainLayout = () => {
         setNotifLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/laporan/kepatuhan`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/laporan/kepatuhan`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -121,8 +121,8 @@ const MainLayout = () => {
             try {
                 const token = localStorage.getItem('token');
                 const [kapalRes, nakhodaRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/kapal`, { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/nakhoda`, { headers: { Authorization: `Bearer ${token}` } })
+                    axios.get(`${import.meta.env.VITE_API_URL}/kapal`, { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, { headers: { Authorization: `Bearer ${token}` } })
                 ]);
                 
                 const q = searchQuery.toLowerCase();

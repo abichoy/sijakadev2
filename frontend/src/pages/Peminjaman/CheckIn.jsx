@@ -24,7 +24,7 @@ const CheckIn = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/peminjaman/aktif`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -81,7 +81,7 @@ const CheckIn = () => {
                 kondisi_per_jaket: inspeksi.map(i => ({ jaket_id: i.jaket_id, kondisi: i.kondisi, catatan: i.catatan }))
             };
             
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/peminjaman/checkin/${selectedLoan.id}`, payload, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/peminjaman/checkin/${selectedLoan.id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

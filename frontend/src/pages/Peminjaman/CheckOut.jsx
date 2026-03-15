@@ -65,7 +65,7 @@ const CheckOut = () => {
     const fetchAllNakhoda = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/nakhoda`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -106,7 +106,7 @@ const CheckOut = () => {
     const handleScanSuccess = async (scannedQrId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/nakhoda/by-qr/${scannedQrId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda/by-qr/${scannedQrId}`);
             if (res?.data?.success) {
                 setNakhodaData(res.data.data);
                 handleNext();
@@ -176,7 +176,7 @@ const CheckOut = () => {
             };
 
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/peminjaman/checkout`, payload, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/peminjaman/checkout`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             

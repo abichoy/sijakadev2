@@ -20,9 +20,9 @@ const Dashboard = () => {
             try {
                 const token = localStorage.getItem('token');
                 const config = { headers: { Authorization: `Bearer ${token}` } };
-                const stokRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard/stok`, config);
-                const pRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard/peminjaman-hari-ini`, config);
-                const kRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/laporan/kepatuhan`, config);
+                const stokRes = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard/stok`, config);
+                const pRes = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard/peminjaman-hari-ini`, config);
+                const kRes = await axios.get(`${import.meta.env.VITE_API_URL}/laporan/kepatuhan`, config);
                 
                 if (stokRes.data.success) {
                     let st = { tersedia: 0, dipinjam: 0, rusak: 0, hilang: 0 };
