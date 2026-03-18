@@ -1,4 +1,4 @@
-# SiJaka (Sistem Informasi Peminjaman Jaket Keselamatan)
+# SiJaka (Sistem Informasi Peminjaman Jaket Keselamatan Kapal)
 
 SiJaka adalah aplikasi berbasis web yang didesain secara khusus untuk UPP Kelas II Maccini Baji, Kabupaten Pangkep, nhằm mengelola sirkulasi dan kepatuhan peminjaman jaket keselamatan pada nakhoda dan kapal-kapal motor tradisional (Jolloro).
 
