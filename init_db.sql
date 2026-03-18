@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('petugas','admin') NOT NULL,
+  avatar_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS inventaris (
   jenis ENUM('dewasa','anak') NOT NULL,
   kondisi ENUM('baik','rusak','hilang','dipinjam') DEFAULT 'baik',
   lokasi_penyimpanan VARCHAR(100) DEFAULT 'Jembatan Baru',
+  keterangan TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -59,10 +61,23 @@ CREATE TABLE IF NOT EXISTS transaksi_jaket (
   transaksi_id CHAR(36),
   jaket_id CHAR(36),
   kondisi_saat_pinjam ENUM('baik','rusak','hilang') DEFAULT 'baik',
-  kondisi_saat_kembali ENUM('baik','robek','berjamur','gesper_rusak') NULL,
+  kondisi_saat_kembali ENUM('baik','rusak','hilang') NULL,
   catatan TEXT,
   FOREIGN KEY (transaksi_id) REFERENCES transaksi_peminjaman(id) ON DELETE CASCADE,
   FOREIGN KEY (jaket_id) REFERENCES inventaris(id)
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36),
+    username VARCHAR(100) NOT NULL,
+    action ENUM('CREATE', 'UPDATE', 'DELETE', 'DELETE_BLOCKED') NOT NULL,
+    module VARCHAR(50) NOT NULL,
+    target_id CHAR(36),
+    target_label VARCHAR(200),
+    detail TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Note: In MySQL 8+, UUID() can be used to generate ids or we can let Sequelize handle it.
