@@ -5,6 +5,121 @@ import SignatureCanvas from 'react-signature-canvas';
 import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
 import JaketSelectorModal from './JaketSelectorModal';
+import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
+import { X, AlertTriangle } from 'lucide-react';
+
+const ActiveLoanWarningDialog = ({ open, onClose, data }) => {
+    if (!data) return null;
+    return (
+        <Dialog 
+            open={open} 
+            onClose={onClose}
+            PaperProps={{
+                sx: { 
+                    borderRadius: '24px', 
+                    maxWidth: '450px',
+                    width: '100%',
+                    overflow: 'hidden'
+                }
+            }}
+        >
+            <DialogTitle sx={{ 
+                bgcolor: '#ef4444', 
+                color: 'white', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                px: 3,
+                py: 2
+            }}>
+                <Box display="flex" alignItems="center" gap={1.5}>
+                    <AlertTriangle size={24} />
+                    <Typography variant="h6" fontWeight="900" sx={{ letterSpacing: 1 }}>PERHATIAN !</Typography>
+                </Box>
+                <IconButton onClick={onClose} sx={{ color: 'white' }}>
+                    <X size={24} />
+                </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ p: 4 }}>
+                <Box mb={3} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                        <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 500, width: '140px', flexShrink: 0 }}>
+                            Nama Kapal
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                            : {data.Kapal?.nama_kapal}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                        <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 500, width: '140px', flexShrink: 0 }}>
+                            Nama Nakhoda
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                            : {data.Nakhoda?.nama_lengkap}
+                        </Typography>
+                    </Box>
+                </Box>
+
+                <Box sx={{ 
+                    bgcolor: '#fff5f5', 
+                    borderRadius: '16px', 
+                    p: 3, 
+                    mb: 4, 
+                    border: '1px solid #fee2e2',
+                    textAlign: 'center'
+                }}>
+                    <Typography variant="caption" fontWeight="900" color="#ef4444" sx={{ letterSpacing: 1, display: 'block', mb: 2 }}>
+                        JUMLAH JAKET YANG DIPINJAM:
+                    </Typography>
+                    <Box display="flex" justifyContent="center" alignItems="center">
+                        <Box flex={1}>
+                            <Typography variant="h4" fontWeight="900" color="#ef4444">{data.jumlah_dewasa_dipinjam}</Typography>
+                            <Typography variant="caption" fontWeight="800" color="text.secondary">DEWASA</Typography>
+                        </Box>
+                        <Divider orientation="vertical" flexItem sx={{ mx: 2, height: '40px', alignSelf: 'center' }} />
+                        <Box flex={1}>
+                            <Typography variant="h4" fontWeight="900" color="#ef4444">{data.jumlah_anak_dipinjam}</Typography>
+                            <Typography variant="caption" fontWeight="800" color="text.secondary">ANAK</Typography>
+                        </Box>
+                    </Box>
+                </Box>
+
+                <Box sx={{ 
+                    bgcolor: '#f8fafc', 
+                    borderRadius: '16px', 
+                    p: 3, 
+                    mb: 4, 
+                    border: '1px solid #e2e8f0',
+                    textAlign: 'center'
+                }}>
+                    <Typography variant="body1" sx={{ color: '#475569', lineHeight: 1.6 }}>
+                        Masih <Typography component="span" fontWeight="900" color="#ef4444" sx={{ textDecoration: 'underline' }}>belum mengembalikan</Typography> jaket keselamatan (life jacket).
+                    </Typography>
+                    <Typography variant="body2" fontWeight="800" sx={{ mt: 1, fontStyle: 'italic', color: '#1e293b' }}>
+                        Kembalikan dulu untuk dapat melakukan peminjaman lagi.
+                    </Typography>
+                </Box>
+
+                <Button 
+                    variant="contained" 
+                    fullWidth 
+                    onClick={onClose}
+                    sx={{ 
+                        bgcolor: '#1e293b', 
+                        '&:hover': { bgcolor: '#0f172a' },
+                        borderRadius: '12px',
+                        py: 1.8,
+                        fontWeight: '900',
+                        fontSize: '1rem',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                >
+                    MENGERTI
+                </Button>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 const komitmenHtml = `<hr>
 <p style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><br></p>
@@ -49,6 +164,7 @@ const CheckOut = () => {
     const [selectedManualNakhoda, setSelectedManualNakhoda] = useState(null);
     const [nakhodaData, setNakhodaData] = useState(null);
     const [errorMsg, setErrorMsg] = useState('');
+    const [activeLoanWarning, setActiveLoanWarning] = useState({ open: false, data: null });
     
     // Checkout form state (Arrays of UUIDs)
     const [form, setForm] = useState({ jaket_dewasa_ids: [], jaket_anak_ids: [] });
@@ -102,20 +218,27 @@ const CheckOut = () => {
         await stopScanner();
         setLoading(true);
         try {
-            const aktifRes = await axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`);
+            const aktifRes = await axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
             const activeLoans = aktifRes.data.data;
-            const hasActiveLoan = activeLoans.find(l => l.nakhoda_id === scannedQrId || l.Nakhoda?.id === scannedQrId);
-            
-            if (hasActiveLoan) {
-                setErrorMsg(`Nakhoda ${hasActiveLoan.Nakhoda?.nama_lengkap} masih memiliki peminjaman aktif. Silakan lakukan Check-In terlebih dahulu.`);
-                setLoading(false);
-                if (startScannerRef.current) startScannerRef.current(); 
-                return;
-            }
 
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda/by-qr/${scannedQrId}`);
             if (res?.data?.success) {
-                setNakhodaData(res.data.data);
+                const nakhoda = res.data.data;
+                const hasActiveLoan = activeLoans.find(l => 
+                    l.nakhoda_id === nakhoda.id || 
+                    l.kapal_id === nakhoda.kapal_id
+                );
+
+                if (hasActiveLoan) {
+                    setActiveLoanWarning({ open: true, data: hasActiveLoan });
+                    setLoading(false);
+                    if (startScannerRef.current) startScannerRef.current(); 
+                    return;
+                }
+
+                setNakhodaData(nakhoda);
                 handleNext();
             }
         } catch (error) {
@@ -170,13 +293,38 @@ const CheckOut = () => {
 
     // Removal of redundant handleScanSuccess since it's now defined above within useCallback
 
-    const handleProceedManual = () => {
+    const handleProceedManual = async () => {
         if (!selectedManualNakhoda) {
             setErrorMsg('Silakan pilih Nakhoda atau Kapal terlebih dahulu.');
             return;
         }
-        setNakhodaData(selectedManualNakhoda);
-        handleNext();
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const aktifRes = await axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const activeLoans = aktifRes.data.data;
+
+            const hasActiveLoan = activeLoans.find(l => 
+                l.nakhoda_id === selectedManualNakhoda.id || 
+                l.kapal_id === selectedManualNakhoda.kapal_id
+            );
+
+            if (hasActiveLoan) {
+                setActiveLoanWarning({ open: true, data: hasActiveLoan });
+                return;
+            }
+
+            setNakhodaData(selectedManualNakhoda);
+            handleNext();
+        } catch (error) {
+            console.error('Check active loan error:', error);
+            setErrorMsg('Gagal memeriksa status peminjaman aktif.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleHitungKuota = () => {
@@ -483,6 +631,12 @@ const CheckOut = () => {
                 maxLimit={modalData.max}
                 typeLabel={modalData.type}
                 preSelected={modalData.type === 'Dewasa' ? form.jaket_dewasa_ids : form.jaket_anak_ids}
+            />
+
+            <ActiveLoanWarningDialog 
+                open={activeLoanWarning.open} 
+                onClose={() => setActiveLoanWarning({ open: false, data: null })}
+                data={activeLoanWarning.data}
             />
         </Box>
     );

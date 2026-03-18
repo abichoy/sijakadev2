@@ -12,7 +12,27 @@ exports.checkout = async (req, res) => {
     try {
         const { nakhoda_id, kapal_id, jaket_dewasa_ids = [], jaket_anak_ids = [], ttd_digital } = req.body;
         
+        // Check for active loan
+        const activeLoan = await TransaksiPeminjaman.findOne({
+            where: {
+                [sequelize.Sequelize.Op.or]: [
+                    { nakhoda_id: nakhoda_id },
+                    { kapal_id: kapal_id }
+                ],
+                status: 'dipinjam'
+            },
+            include: [
+                { model: Kapal, as: 'Kapal' },
+                { model: Nakhoda, as: 'Nakhoda' }
+            ]
+        });
+
+        if (activeLoan) {
+            throw new Error(`Nama Kapal : ${activeLoan.Kapal?.nama_kapal || '-'}, Nama Nakhoda : ${activeLoan.Nakhoda?.nama_lengkap || '-'}, Jumlah jaket yang dipinjam [Dewasa : ${activeLoan.jumlah_dewasa_dipinjam}, Anak : ${activeLoan.jumlah_anak_dipinjam}] masih/belum mengembalikan jaket keselamatan/life jaket. kembalikan dulu baru dapat melakukan peminjaman lagi`);
+        }
+
         const kapal = await Kapal.findByPk(kapal_id);
+
         if (!kapal) throw new Error('Kapal tidak ditemukan');
 
         const jumlah_dewasa = jaket_dewasa_ids.length;
