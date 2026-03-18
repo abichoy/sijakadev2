@@ -9,12 +9,21 @@ import Nakhoda from './pages/Nakhoda';
 import Inventaris from './pages/Inventaris';
 import Laporan from './pages/Laporan';
 import Profile from './pages/Profile';
+import Pengaturan from './pages/Pengaturan';
 import { useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
   return children;
 };
@@ -32,6 +41,7 @@ function App() {
         <Route path="laporan" element={<Laporan />} />
         <Route path="edukasi" element={<Edukasi />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="pengaturan" element={<AdminRoute><Pengaturan /></AdminRoute>} />
       </Route>
     </Routes>
   );

@@ -5,6 +5,7 @@ const Nakhoda = require('./Nakhoda');
 const Inventaris = require('./Inventaris');
 const TransaksiPeminjaman = require('./TransaksiPeminjaman');
 const TransaksiJaket = require('./TransaksiJaket');
+const AuditLog = require('./AuditLog');
 
 // Kapal - Nakhoda (1 to 1 or 1 to many, specified as 1 to 1 in prompt)
 Kapal.hasOne(Nakhoda, { foreignKey: 'kapal_id', as: 'Nakhoda' });
@@ -31,5 +32,6 @@ module.exports = {
     Nakhoda,
     Inventaris,
     TransaksiPeminjaman,
-    TransaksiJaket
+    TransaksiJaket,
+    AuditLog
 };

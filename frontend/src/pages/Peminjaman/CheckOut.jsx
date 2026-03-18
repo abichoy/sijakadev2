@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Typography, Card, Stepper, Step, StepLabel, Button, TextField, Grid, Snackbar, Alert, CircularProgress, Autocomplete, Divider, Paper } from '@mui/material';
+import { Box, Typography, Card, Stepper, Step, StepLabel, Button, TextField, Grid, Snackbar, Alert, CircularProgress, Autocomplete, Divider, Paper, FormControlLabel, Checkbox } from '@mui/material';
 import { Camera, QrCode, PenTool, CheckCircle, Package } from 'lucide-react';
-import SignatureCanvas from 'react-signature-canvas';
 import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
 import JaketSelectorModal from './JaketSelectorModal';
@@ -121,41 +120,20 @@ const ActiveLoanWarningDialog = ({ open, onClose, data }) => {
     );
 };
 
-const komitmenHtml = `<hr>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><br></p>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Dalam rangka mewujudkan pelayaran yang aman dan melindungi nyawa seluruh penumpang kapal tradisional di perairan Kabupaten Pangkajene dan Kepulauan, saya selaku Nakhoda secara sadar dan penuh kebanggaan menerima amanah sebagai <strong>&quot;Duta Keselamatan&quot;.</strong></span></p>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Berkenaan dengan peminjaman Jaket Keselamatan pada hari ini, saya menyatakan komitmen sebagai berikut:</span></p>
-<div style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'>
-    <ol style="margin-bottom:0cm;list-style-type: decimal;">
-        <li style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'><strong><span style='font-family:"Arial",sans-serif;'>Pengawasan Penuh</span></strong></li>
-    </ol>
-</div>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:0cm;margin-left:36.0pt;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Saya akan mendistribusikan dan memastikan seluruh penumpang kapal memakai jaket keselamatan sebelum kapal diberangkatkan dari dermaga;</span></p>
-<div style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'>
-    <ol start="2" style="margin-bottom:0cm;list-style-type: decimal;">
-        <li style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'><strong><span style='font-family:"Arial",sans-serif;'>Imbauan Keselamatan (Edukasi Lokal)</span></strong></li>
-    </ol>
-</div>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:0cm;margin-left:36.0pt;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Saya akan memberikan imbauan keselamatan kepada penumpang selama pelayaran, serta mengedukasi penumpang bahwa jaket ini adalah &quot;Seragam Pelaut Hebat&quot; dan &quot;Atribut Keselamatan&quot; yang patut dibanggakan demi menjaga keselamatan bersama, bukan sebagai pertanda buruk (pammali);</span></p>
-<div style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'>
-    <ol start="3" style="margin-bottom:0cm;list-style-type: decimal;">
-        <li style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'><strong><span style='font-family:"Arial",sans-serif;'>Kedisiplinan Pemakaian</span></strong></li>
-    </ol>
-</div>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:0cm;margin-left:36.0pt;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Saya tidak memperkenankan penumpang untuk melepas jaket keselamatan selama pelayaran berlangsung sampai kapal bersandar di pelabuhan tujuan, kecuali dalam kondisi tertentu yang dinilai aman dan tetap berada di bawah pengawasan saya selaku nakhoda kapal;</span></p>
-<div style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'>
-    <ol start="4" style="margin-bottom:0cm;list-style-type: decimal;">
-        <li style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'><strong><span style='font-family:"Arial",sans-serif;'>Menjaga Jaket Keselamatan</span></strong></li>
-    </ol>
-</div>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:0cm;margin-left:36.0pt;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Saya bertindak sebagai penanggung jawab tunggal atas keutuhan jaket keselamatan ini. Saya berkomitmen untuk mengumpulkan kembali seluruh jaket dari penumpang dan mengembalikannya kepada Petugas Stasiun/Dermaga segera setelah pelayaran selesai;</span></p>
-<div style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'>
-    <ol start="5" style="margin-bottom:0cm;list-style-type: decimal;">
-        <li style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;'><strong><span style='font-family:"Arial",sans-serif;'>Kepatuhan Hukum</span></strong></li>
-    </ol>
-</div>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:36.0pt;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Apabila saya dengan sengaja tidak mengembalikan, menghilangkan, atau melalaikan tanggung jawab keselamatan ini secara berulang, saya bersedia menerima sanksi administratif berupa peringatan hingga peninjauan kembali izin operasional pelayaran kapal saya di dermaga pangkalan.</span></p>
-<p style='margin-top:0cm;margin-right:0cm;margin-bottom:8.0pt;margin-left:0cm;line-height:115%;font-size:16px;font-family:"Calibri",sans-serif;text-align:justify;'><span style='font-family:"Arial",sans-serif;'>Demikian surat pernyataan ini saya buat dengan penuh rasa tanggung jawab sebagai pelaut yang menjunjung tinggi keselamatan jiwa manusia di laut.</span></p>`;
+const komitmenHtml = `<p>Dalam rangka mewujudkan penyelenggaraan pelayaran yang aman, tertib, dan bertanggung jawab serta melindungi keselamatan jiwa seluruh penumpang kapal tradisional di wilayah perairan Kabupaten Pangkajene dan Kepulauan, saya yang bertanda tangan di bawah ini selaku <strong>Nakhoda Kapal</strong>, dengan penuh kesadaran, komitmen, dan rasa tanggung jawab menyatakan menerima amanah sebagai <strong>"Duta Keselamatan Pelayaran."</strong></p>
+<p>Sehubungan dengan peminjaman <strong>Jaket Keselamatan (Life Jacket)</strong> pada hari ini, saya menyatakan komitmen dan kesanggupan untuk melaksanakan hal-hal sebagai berikut:</p>
+<h3 style="font-size: 1.1rem; margin-top: 1.5rem;">1. Pengawasan Penuh</h3>
+<p>Saya akan mendistribusikan serta memastikan bahwa <strong>seluruh penumpang kapal telah mengenakan jaket keselamatan sebelum kapal diberangkatkan dari dermaga</strong>, sebagai langkah awal dalam menjamin keselamatan selama pelayaran.</p>
+<h3 style="font-size: 1.1rem; margin-top: 1.5rem;">2. Imbauan dan Edukasi Keselamatan</h3>
+<p>Saya akan memberikan <strong>imbauan keselamatan kepada seluruh penumpang selama pelayaran</strong>, serta mengedukasi bahwa jaket keselamatan merupakan <strong>"Seragam Pelaut Hebat" dan atribut keselamatan yang patut dibanggakan</strong>, sebagai simbol kesiapsiagaan dalam menjaga keselamatan bersama, dan bukan sebagai pertanda buruk (<em>pammali</em>).</p>
+<h3 style="font-size: 1.1rem; margin-top: 1.5rem;">3. Kedisiplinan Pemakaian</h3>
+<p>Saya tidak akan memperkenankan penumpang untuk <strong>melepas jaket keselamatan selama pelayaran berlangsung hingga kapal bersandar di pelabuhan tujuan</strong>, kecuali dalam kondisi tertentu yang dinilai aman dan tetap berada dalam pengawasan saya sebagai nakhoda kapal.</p>
+<h3 style="font-size: 1.1rem; margin-top: 1.5rem;">4. Tanggung Jawab atas Perlengkapan Keselamatan</h3>
+<p>Saya bertindak sebagai <strong>penanggung jawab penuh atas keutuhan dan pengembalian jaket keselamatan</strong> yang dipinjamkan. Saya berkomitmen untuk mengumpulkan kembali seluruh jaket keselamatan dari penumpang dan <strong>mengembalikannya kepada Petugas Stasiun/Dermaga segera setelah pelayaran selesai.</strong></p>
+<h3 style="font-size: 1.1rem; margin-top: 1.5rem;">5. Kepatuhan terhadap Ketentuan</h3>
+<p>Apabila saya dengan sengaja <strong>tidak mengembalikan, menghilangkan, atau lalai dalam melaksanakan tanggung jawab keselamatan ini secara berulang</strong>, maka saya bersedia menerima <strong>sanksi administratif sesuai ketentuan yang berlaku</strong>, mulai dari peringatan hingga peninjauan kembali izin operasional pelayaran kapal saya di dermaga pangkalan.</p>
+<hr style="margin: 2rem 0;">
+<p>Demikian <strong>Pakta Integritas</strong> ini saya buat dengan sebenar-benarnya, penuh kesadaran dan tanggung jawab, sebagai wujud komitmen saya sebagai pelaut yang menjunjung tinggi <strong>keselamatan jiwa manusia di laut</strong>.</p>`;
 
 const CheckOut = () => {
     const [activeStep, setActiveStep] = useState(0);
@@ -164,16 +142,19 @@ const CheckOut = () => {
     const [selectedManualNakhoda, setSelectedManualNakhoda] = useState(null);
     const [nakhodaData, setNakhodaData] = useState(null);
     const [errorMsg, setErrorMsg] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
     const [activeLoanWarning, setActiveLoanWarning] = useState({ open: false, data: null });
+    const [agreed, setAgreed] = useState(false);
     
     // Checkout form state (Arrays of UUIDs)
     const [form, setForm] = useState({ jaket_dewasa_ids: [], jaket_anak_ids: [] });
     // Modal states
     const [modalData, setModalData] = useState({ open: false, type: 'Dewasa', max: 0 });
     
-    const sigPad = useRef({});
+    const isProcessingRef = useRef(false);
+    const isInitializingRef = useRef(false);
 
-    const steps = ['Pindai Kartu', 'Verifikasi Kuota', 'Tanda Tangan & Konfirmasi'];
+    const steps = ['Pindai Kartu', 'Verifikasi Kuota', 'Pakta Integritas & Konfirmasi'];
 
     const handleNext = () => setActiveStep((prev) => prev + 1);
     const handleBack = () => setActiveStep((prev) => prev - 1);
@@ -181,14 +162,28 @@ const CheckOut = () => {
     const fetchAllNakhoda = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data.success) {
-                setAllNakhoda(res.data.data);
+            const [nakhodaRes, aktifRes] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ]);
+
+            if (nakhodaRes.data.success && aktifRes.data.success) {
+                const activeLoans = aktifRes.data.data;
+                // Only show nakhoda/kapal who DON'T have an active loan yet
+                const filtered = nakhodaRes.data.data.filter(nakhoda => {
+                    return !activeLoans.some(l => 
+                        l.nakhoda_id === nakhoda.id || 
+                        l.kapal_id === nakhoda.kapal_id
+                    );
+                });
+                setAllNakhoda(filtered);
             }
         } catch (error) {
-            console.error('Failed to fetch nakhoda list:', error);
+            console.error('Failed to fetch data for check-out nakhoda list:', error);
         }
     };
 
@@ -203,18 +198,29 @@ const CheckOut = () => {
     const stopScanner = useCallback(async () => {
         if (scannerRef.current) {
             try {
+                // Check if it's currently scanning before stopping
                 if (scannerRef.current.isScanning) {
                     await scannerRef.current.stop();
                 }
+                // Always clear the inner HTML to remove video/canvas residues
+                await scannerRef.current.clear();
                 scannerRef.current = null;
                 setIsScanning(false);
             } catch (err) {
                 console.error("Failed to stop scanner", err);
+                // Force cleanup even on error
+                const container = document.getElementById("qr-reader");
+                if (container) container.innerHTML = '';
+                scannerRef.current = null;
+                setIsScanning(false);
             }
         }
     }, []);
 
     const handleScanSuccess = useCallback(async (scannedQrId) => {
+        if (isProcessingRef.current || activeStep !== 0) return;
+        isProcessingRef.current = true;
+        
         await stopScanner();
         setLoading(true);
         try {
@@ -246,32 +252,59 @@ const CheckOut = () => {
             if (startScannerRef.current) startScannerRef.current(); 
         } finally {
             setLoading(false);
+            isProcessingRef.current = false;
         }
-    }, [stopScanner]);
+    }, [stopScanner, activeStep]); // Added activeStep dependency for the guard
 
     const startScanner = useCallback(async () => {
-        if (scannerRef.current) return; 
+        if (scannerRef.current || isInitializingRef.current) return; 
+        isInitializingRef.current = true;
+
+        // Ensure the DOM element exists before starting
+        const container = document.getElementById("qr-reader");
+        if (!container) {
+            isInitializingRef.current = false;
+            return;
+        }
+
+        // Clean up any residual video elements in the container
+        container.innerHTML = '';
 
         try {
             const html5QrCode = new Html5Qrcode("qr-reader");
             scannerRef.current = html5QrCode;
-            setIsScanning(true);
-
+            
             await html5QrCode.start(
                 { facingMode: "environment" }, 
                 {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
+                    fps: 25, 
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
+                        return { width: size, height: size };
+                    },
+                    aspectRatio: 1.0,
+                    showTorchButtonIfSupported: true,
                 },
                 (decodedText) => {
                     handleScanSuccess(decodedText);
                 },
-                () => { /* silent */ }
+                () => { /* silent scan failure */ }
             );
+            setIsScanning(true);
         } catch (err) {
             console.error("Unable to start scanning", err);
             setIsScanning(false);
-            scannerRef.current = null;
+            if (scannerRef.current) {
+                try {
+                    await scannerRef.current.clear();
+                } catch {
+                    // Failing to clear is acceptable if it wasn't started
+                }
+                scannerRef.current = null;
+            }
+            container.innerHTML = '';
+        } finally {
+            isInitializingRef.current = false;
         }
     }, [handleScanSuccess]);
 
@@ -355,26 +388,18 @@ const CheckOut = () => {
     };
 
     const handleSubmitCheckout = async () => {
-        if (sigPad.current.isEmpty()) {
-            return setErrorMsg('Tanda tangan diperlukan sebelum konfirmasi.');
+        if (!agreed) {
+            return setErrorMsg('Anda harus menyetujui Pakta Integritas sebelum melanjutkan.');
         }
         setLoading(true);
 
         try {
-            let dataURL = '';
-            try {
-                dataURL = sigPad.current.getTrimmedCanvas().toDataURL('image/png');
-            } catch (err) {
-                console.warn("Trimmed canvas extraction failed, using full background.", err);
-                dataURL = sigPad.current.toDataURL('image/png');
-            }
-
             const payload = {
                 nakhoda_id: nakhodaData.id,
                 kapal_id: nakhodaData?.Kapal?.id,
                 jaket_dewasa_ids: form.jaket_dewasa_ids,
                 jaket_anak_ids: form.jaket_anak_ids,
-                ttd_digital: dataURL
+                ttd_digital: null // Signature removed per request
             };
 
             const token = localStorage.getItem('token');
@@ -383,9 +408,10 @@ const CheckOut = () => {
             });
             
             if (response.data.success) {
-                // Return to home or reset state
-                alert('Peminjaman Berhasil!');
-                window.location.reload(); 
+                setSuccessMsg('Peminjaman Berhasil! Data telah tersimpan.');
+                setTimeout(() => {
+                    window.location.reload(); 
+                }, 2000);
             }
         } catch (error) {
             console.error('Checkout error:', error);
@@ -560,8 +586,8 @@ const CheckOut = () => {
                             
                             <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
                                 <Box>
-                                    <Typography variant="h5" fontWeight={900} letterSpacing={-0.5} gutterBottom>Surat Pernyataan Komitmen</Typography>
-                                    <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ textTransform: 'uppercase' }}>Duta Keselamatan Maritim - SiJaka</Typography>
+                                    <Typography variant="h5" fontWeight={900} letterSpacing={-0.5} gutterBottom>PAKTA INTEGRITAS NAKHODA</Typography>
+                                    <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ textTransform: 'uppercase' }}>Peminjaman dan Penggunaan Jaket Keselamatan</Typography>
                                 </Box>
                                 <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40, opacity: 0.8 }} />
                             </Box>
@@ -589,29 +615,24 @@ const CheckOut = () => {
                             </Typography>
                         </Paper>
 
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>TANDA TANGAN DIGITAL NAKHODA</Typography>
-                        <Box sx={{ border: '2px solid', borderColor: 'divider', borderRadius: '24px', bgcolor: '#fff', mb: 2, overflow: 'hidden', position: 'relative' }}>
-                            <SignatureCanvas 
-                                penColor="black"
-                                canvasProps={{ width: 800, height: 260, className: 'sigCanvas' }} 
-                                ref={sigPad}
+                        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox 
+                                        checked={agreed} 
+                                        onChange={(e) => setAgreed(e.target.checked)}
+                                        color="primary"
+                                        size="large"
+                                    />
+                                }
+                                label={<Typography variant="h6" fontWeight="bold">SAYA MENYETUJUI</Typography>}
                             />
-                            <Button 
-                                size="small" 
-                                color="error"
-                                onClick={() => sigPad.current.clear()} 
-                                sx={{ position: 'absolute', bottom: 16, right: 16, borderRadius: 10, bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)', fontWeight: 'bold' }} 
-                                startIcon={<PenTool size={14}/>}
-                            >
-                                Ulangi
-                            </Button>
                         </Box>
-                        <Typography variant="caption" color="text.secondary">Gunakan mouse atau layar sentuh untuk menandatangani</Typography>
 
-                        <Box display="flex" gap={2} justifyContent="center" mt={6}>
+                        <Box display="flex" gap={2} justifyContent="center" mt={2}>
                             <Button variant="outlined" size="large" onClick={handleBack} sx={{ borderRadius: '16px', px: 6, fontWeight: 'bold', minWidth: 160 }}>Kembali</Button>
-                            <Button variant="contained" size="large" color="success" onClick={handleSubmitCheckout} disabled={loading} sx={{ borderRadius: '16px', px: 6, py: 2, fontWeight: '900', fontSize: '1.2rem', minWidth: 240, boxShadow: '0 8px 20px rgba(34, 197, 94, 0.3)' }}>
-                                {loading ? 'Memproses...' : 'KONFIRMASI LOAN'}
+                            <Button variant="contained" size="large" color="success" onClick={handleSubmitCheckout} disabled={loading || !agreed} sx={{ borderRadius: '16px', px: 6, py: 2, fontWeight: '900', fontSize: '1.2rem', minWidth: 240, boxShadow: '0 8px 20px rgba(34, 197, 94, 0.3)' }}>
+                                {loading ? 'Memproses...' : 'KONFIRMASI PEMINJAMAN'}
                             </Button>
                         </Box>
                     </Box>
@@ -621,6 +642,12 @@ const CheckOut = () => {
             <Snackbar open={!!errorMsg} autoHideDuration={6000} onClose={() => setErrorMsg('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
                 <Alert onClose={() => setErrorMsg('')} severity="error" sx={{ width: '100%', borderRadius: 2, fontWeight: 'bold' }} variant="filled">
                     {errorMsg}
+                </Alert>
+            </Snackbar>
+
+            <Snackbar open={!!successMsg} autoHideDuration={2000} onClose={() => setSuccessMsg('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert severity="success" sx={{ width: '100%', borderRadius: 3, fontWeight: '900', boxShadow: '0 8px 30px rgba(34, 197, 94, 0.4)' }} variant="filled">
+                    {successMsg}
                 </Alert>
             </Snackbar>
 

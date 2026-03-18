@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Anchor, Mail, Lock, Eye, EyeOff, LifeBuoy } from 'lucide-react';
+import { ShieldCheck, Anchor, User, Lock, Eye, EyeOff, LifeBuoy } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
 
 const Login = () => {
@@ -79,7 +79,7 @@ const Login = () => {
                             className="w-20 h-20 mb-3 object-contain" 
                         />
                         <h2 className="text-2xl font-bold text-gray-900 mt-2">SiJaka</h2>
-                        <p className="text-gray-400 text-sm mt-1">Sistem Informasi Jaket Keselamatan</p>
+                        <p className="text-gray-400 text-sm mt-1">Sistem Informasi Jaket Keselamatan Kapal</p>
                     </div>
 
                     {error && (
@@ -90,17 +90,17 @@ const Login = () => {
 
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Alamat Email / Username</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nama Pengguna</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Mail size={20} className="text-slate-400" />
+                                    <User size={20} className="text-slate-400" />
                                 </div>
                                 <input
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#f97316]/50 focus:border-[#f97316] transition-all"
-                                    placeholder="admin@pelabuhan.co.id"
+                                    placeholder="Nama Pengguna"
                                     required
                                 />
                             </div>

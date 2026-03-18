@@ -28,7 +28,7 @@ const TransaksiJaket = sequelize.define('TransaksiJaket', {
         defaultValue: 'baik'
     },
     kondisi_saat_kembali: {
-        type: DataTypes.ENUM('baik', 'robek', 'berjamur', 'gesper_rusak'),
+        type: DataTypes.ENUM('baik', 'rusak', 'hilang'),
         allowNull: true
     },
     catatan: {

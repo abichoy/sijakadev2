@@ -9,6 +9,7 @@ const nakhodaRoutes = require('./routes/nakhoda');
 const inventarisRoutes = require('./routes/inventaris');
 const peminjamanRoutes = require('./routes/peminjaman');
 const miscRoutes = require('./routes/misc');
+const userRoutes = require('./routes/user');
 
 const app = express();
 app.use(cors());
@@ -28,6 +29,7 @@ app.use('/api/kapal', kapalRoutes);
 app.use('/api/nakhoda', nakhodaRoutes);
 app.use('/api/inventaris', inventarisRoutes);
 app.use('/api/peminjaman', peminjamanRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api', miscRoutes);
 
 // Add base route for check

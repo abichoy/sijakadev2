@@ -10,7 +10,7 @@ const PeminjamanHeader = () => {
     return (
         <Box sx={{ maxWidth: 800, mx: 'auto', pb: 8 }}>
             <Box mb={4} textAlign="center">
-                <Typography variant="h4" fontWeight="900" color="primary.main">Peminjaman Jaket Keselamatan</Typography>
+                <Typography variant="h4" fontWeight="900" color="primary.main">Peminjaman & Pengembalian Jaket Keselamatan</Typography>
                 <Typography variant="subtitle1" color="text.secondary" fontWeight="500">
                     Alur Manajemen Keselamatan Maritim Terpadu
                 </Typography>

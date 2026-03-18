@@ -63,7 +63,7 @@ exports.checkout = async (req, res) => {
             ttd_digital,
             status: 'dipinjam',
             waktu_checkout: new Date(),
-            batas_waktu: new Date(Date.now() + 12 * 60 * 60 * 1000) // misal batas 12 jam
+            batas_waktu: new Date(Date.now() + 72 * 60 * 60 * 1000) // batas 3 hari (72 jam)
         }, { transaction: t });
 
         const detailPromises = [];
@@ -92,18 +92,34 @@ exports.checkin = async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const transId = req.params.id;
-        const { kondisi_per_jaket, catatan } = req.body; // array of {jaket_id, kondisi}
+        const { kondisi_per_jaket } = req.body; 
         
         const peminjaman = await TransaksiPeminjaman.findByPk(transId);
         if (!peminjaman) throw new Error('Transaksi tidak ditemukan');
         if (peminjaman.status === 'selesai') throw new Error('Transaksi sudah selesai');
         
         for (const input of kondisi_per_jaket) {
-            const detail = await TransaksiJaket.findOne({ where: { transaksi_id: transId, jaket_id: input.jaket_id } });
+            // Find transaction detail
+            const detail = await TransaksiJaket.findOne({ 
+                where: { transaksi_id: transId, jaket_id: input.jaket_id },
+                transaction: t 
+            });
+            
             if (detail) {
-                await detail.update({ kondisi_saat_kembali: input.kondisi, catatan: catatan }, { transaction: t });
-                const newCondition = input.kondisi === 'baik' ? 'baik' : 'rusak';
-                await Inventaris.update({ kondisi: newCondition }, { where: { id: input.jaket_id }, transaction: t });
+                // Update transaction detail
+                await detail.update({ 
+                    kondisi_saat_kembali: input.kondisi, 
+                    catatan: input.catatan 
+                }, { transaction: t });
+
+                // Find and Update master Inventaris record
+                const inv = await Inventaris.findByPk(input.jaket_id, { transaction: t });
+                if (inv) {
+                    await inv.update({
+                        kondisi: input.kondisi,
+                        keterangan: input.catatan
+                    }, { transaction: t });
+                }
             }
         }
 
@@ -128,6 +144,22 @@ exports.getAktif = async (req, res) => {
             ]
         });
         res.json({ success: true, data: aktif });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getAll = async (req, res) => {
+    try {
+        const history = await TransaksiPeminjaman.findAll({
+            include: [
+                { model: Kapal, as: 'Kapal' },
+                { model: Nakhoda, as: 'Nakhoda' },
+                { model: TransaksiJaket, as: 'DetailPeminjaman', include: [{ model: Inventaris, as: 'Inventaris' }] }
+            ],
+            order: [['waktu_checkout', 'DESC']]
+        });
+        res.json({ success: true, data: history });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

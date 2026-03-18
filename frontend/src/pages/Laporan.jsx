@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Tabs, Tab, Card, TextField, Select, MenuItem, FormControl, InputLabel, Grid, InputAdornment } from '@mui/material';
-import { FileText, Download, Search, Filter } from 'lucide-react';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Tabs, Tab, Card, TextField, Select, MenuItem, FormControl, InputLabel, Grid, InputAdornment, TableSortLabel, TablePagination } from '@mui/material';
+import { FileText, Download, Search, Filter, ClipboardList, History, Printer } from 'lucide-react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { jsPDF } from 'jspdf';
@@ -12,21 +12,46 @@ const Laporan = () => {
     const [kepatuhan, setKepatuhan] = useState([]);
     const [nakhodas, setNakhodas] = useState([]);
     const [inventaris, setInventaris] = useState([]);
+    const [auditLogs, setAuditLogs] = useState([]);
+    const [history, setHistory] = useState([]);
+
+    // Tab 0: Riwayat (New)
+    const [searchHistory, setSearchHistory] = useState('');
+    const [sortHistoryField, setSortHistoryField] = useState('waktu_checkout');
+    const [sortHistoryOrder, setSortHistoryOrder] = useState('desc');
+    const [pageHistory, setPageHistory] = useState(0);
+    const [rowsPerPageHistory, setRowsPerPageHistory] = useState(100);
 
     // Tab 1 States
     const [searchKepa, setSearchKepa] = useState('');
     const [filterKepa, setFilterKepa] = useState('Semua');
-    const [sortKepa, setSortKepa] = useState('Terbaru');
+    const [sortKepaField, setSortKepaField] = useState('waktu_checkout');
+    const [sortKepaOrder, setSortKepaOrder] = useState('desc');
+    const [pageXKepa, setPageXKepa] = useState(0);
+    const [rowsPerPageKepa, setRowsPerPageKepa] = useState(100);
 
     // Tab 2 States
     const [searchNakhoda, setSearchNakhoda] = useState('');
-    const [sortNakhoda, setSortNakhoda] = useState('Nama A-Z');
+    const [sortNakhodaField, setSortNakhodaField] = useState('nama_lengkap');
+    const [sortNakhodaOrder, setSortNakhodaOrder] = useState('asc');
+    const [pageXNakhoda, setPageXNakhoda] = useState(0);
+    const [rowsPerPageNakhoda, setRowsPerPageNakhoda] = useState(100);
 
     // Tab 3 States
     const [searchInv, setSearchInv] = useState('');
     const [filterJenisInv, setFilterJenisInv] = useState('Semua');
     const [filterKondisiInv, setFilterKondisiInv] = useState('Semua');
-    const [sortInv, setSortInv] = useState('Kode A-Z');
+    const [sortInvField, setSortInvField] = useState('kode_jaket');
+    const [sortInvOrder, setSortInvOrder] = useState('asc');
+    const [pageXInv, setPageXInv] = useState(0);
+    const [rowsPerPageInv, setRowsPerPageInv] = useState(100);
+
+    // Tab 4 States
+    const [searchLog, setSearchLog] = useState('');
+    const [sortLogField, setSortLogField] = useState('timestamp');
+    const [sortLogOrder, setSortLogOrder] = useState('desc');
+    const [pageXLog, setPageXLog] = useState(0);
+    const [rowsPerPageLog, setRowsPerPageLog] = useState(100);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -34,15 +59,19 @@ const Laporan = () => {
                 const token = localStorage.getItem('token');
                 const config = { headers: { Authorization: `Bearer ${token}` } };
                 
-                const [resKepa, resNakh, resInv] = await Promise.all([
+                const [resKepa, resNakh, resInv, resLogs, resHist] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/aktif`, config).catch(() => ({data:{data:[]}})),
                     axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, config).catch(() => ({data:{data:[]}})),
-                    axios.get(`${import.meta.env.VITE_API_URL}/inventaris`, config).catch(() => ({data:{data:[]}}))
+                    axios.get(`${import.meta.env.VITE_API_URL}/inventaris`, config).catch(() => ({data:{data:[]}})),
+                    axios.get(`${import.meta.env.VITE_API_URL}/audit-logs`, config).catch(() => ({data:{data:[]}})),
+                    axios.get(`${import.meta.env.VITE_API_URL}/peminjaman/history`, config).catch(() => ({data:{data:[]}}))
                 ]);
 
                 if (resKepa.data.data) setKepatuhan(resKepa.data.data);
                 if (resNakh.data.data) setNakhodas(resNakh.data.data);
                 if (resInv.data.data) setInventaris(resInv.data.data);
+                if (resLogs.data.data) setAuditLogs(resLogs.data.data);
+                if (resHist.data.data) setHistory(resHist.data.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -55,7 +84,53 @@ const Laporan = () => {
         setTabIndex(newIndex);
     };
 
+    const handleRequestSort = (tab, property) => {
+        if (tab === 0) {
+            const isAsc = sortHistoryField === property && sortHistoryOrder === 'asc';
+            setSortHistoryOrder(isAsc ? 'desc' : 'asc');
+            setSortHistoryField(property);
+        } else if (tab === 1) {
+            const isAsc = sortKepaField === property && sortKepaOrder === 'asc';
+            setSortKepaOrder(isAsc ? 'desc' : 'asc');
+            setSortKepaField(property);
+        } else if (tab === 2) {
+            const isAsc = sortNakhodaField === property && sortNakhodaOrder === 'asc';
+            setSortNakhodaOrder(isAsc ? 'desc' : 'asc');
+            setSortNakhodaField(property);
+        } else if (tab === 3) {
+            const isAsc = sortInvField === property && sortInvOrder === 'asc';
+            setSortInvOrder(isAsc ? 'desc' : 'asc');
+            setSortInvField(property);
+        } else if (tab === 4) {
+            const isAsc = sortLogField === property && sortLogOrder === 'asc';
+            setSortLogOrder(isAsc ? 'desc' : 'asc');
+            setSortLogField(property);
+        }
+    };
+
     // Data Processing with useMemo
+    const processedHistory = useMemo(() => {
+        let data = [...history];
+        if (searchHistory) {
+            const q = searchHistory.toLowerCase();
+            data = data.filter(item => 
+                item.Nakhoda?.nama_lengkap?.toLowerCase().includes(q) || 
+                item.Kapal?.nama_kapal?.toLowerCase().includes(q) ||
+                item.status?.toLowerCase().includes(q)
+            );
+        }
+        data.sort((a, b) => {
+            let fieldA, fieldB;
+            if (sortHistoryField === 'waktu_checkout') { fieldA = dayjs(a.waktu_checkout).valueOf(); fieldB = dayjs(b.waktu_checkout).valueOf(); }
+            else if (sortHistoryField === 'waktu_checkin') { fieldA = dayjs(a.waktu_checkin || 0).valueOf(); fieldB = dayjs(b.waktu_checkin || 0).valueOf(); }
+            else if (sortHistoryField === 'nakhoda') { fieldA = a.Nakhoda?.nama_lengkap || ''; fieldB = b.Nakhoda?.nama_lengkap || ''; }
+            else if (sortHistoryField === 'status') { fieldA = a.status; fieldB = b.status; }
+            if (sortHistoryOrder === 'asc') return fieldA > fieldB ? 1 : -1;
+            return fieldA < fieldB ? 1 : -1;
+        });
+        return data;
+    }, [history, searchHistory, sortHistoryField, sortHistoryOrder]);
+
     const processedKepatuhan = useMemo(() => {
         let data = [...kepatuhan];
         if (searchKepa) {
@@ -73,12 +148,28 @@ const Laporan = () => {
             });
         }
         data.sort((a, b) => {
-            if (sortKepa === 'Terbaru') return dayjs(b.waktu_checkout).valueOf() - dayjs(a.waktu_checkout).valueOf();
-            if (sortKepa === 'Terlama') return dayjs(a.waktu_checkout).valueOf() - dayjs(b.waktu_checkout).valueOf();
-            return 0;
+            let fieldA = '';
+            let fieldB = '';
+            
+            if (sortKepaField === 'waktu_checkout') {
+                fieldA = dayjs(a.waktu_checkout).valueOf();
+                fieldB = dayjs(b.waktu_checkout).valueOf();
+            } else if (sortKepaField === 'nakhoda') {
+                fieldA = a.Nakhoda?.nama_lengkap?.toLowerCase() || '';
+                fieldB = b.Nakhoda?.nama_lengkap?.toLowerCase() || '';
+            } else if (sortKepaField === 'jumlah') {
+                fieldA = (a.jumlah_dewasa_dipinjam || 0) + (a.jumlah_anak_dipinjam || 0);
+                fieldB = (b.jumlah_dewasa_dipinjam || 0) + (b.jumlah_anak_dipinjam || 0);
+            } else if (sortKepaField === 'status') {
+                fieldA = dayjs().isAfter(dayjs(a.batas_waktu)) ? 1 : 0;
+                fieldB = dayjs().isAfter(dayjs(b.batas_waktu)) ? 1 : 0;
+            }
+
+            if (sortKepaOrder === 'asc') return fieldA > fieldB ? 1 : -1;
+            return fieldA < fieldB ? 1 : -1;
         });
         return data;
-    }, [kepatuhan, searchKepa, filterKepa, sortKepa]);
+    }, [kepatuhan, searchKepa, filterKepa, sortKepaField, sortKepaOrder]);
 
     const processedNakhodas = useMemo(() => {
         let data = [...nakhodas];
@@ -89,13 +180,25 @@ const Laporan = () => {
             );
         }
         data.sort((a, b) => {
-            if (sortNakhoda === 'Nama A-Z') return (a.nama_lengkap || '').localeCompare(b.nama_lengkap || '');
-            if (sortNakhoda === 'Nama Z-A') return (b.nama_lengkap || '').localeCompare(a.nama_lengkap || '');
-            if (sortNakhoda === 'Kapasitas Terbesar') return (b.Kapal?.kapasitas_penumpang || 0) - (a.Kapal?.kapasitas_penumpang || 0);
-            return 0;
+            let fieldA = '';
+            let fieldB = '';
+
+            if (sortNakhodaField === 'nama_lengkap') {
+                fieldA = a.nama_lengkap?.toLowerCase() || '';
+                fieldB = b.nama_lengkap?.toLowerCase() || '';
+            } else if (sortNakhodaField === 'kapal') {
+                fieldA = a.Kapal?.nama_kapal?.toLowerCase() || '';
+                fieldB = b.Kapal?.nama_kapal?.toLowerCase() || '';
+            } else if (sortNakhodaField === 'kapasitas') {
+                fieldA = a.Kapal?.kapasitas_penumpang || 0;
+                fieldB = b.Kapal?.kapasitas_penumpang || 0;
+            }
+
+            if (sortNakhodaOrder === 'asc') return fieldA > fieldB ? 1 : -1;
+            return fieldA < fieldB ? 1 : -1;
         });
         return data;
-    }, [nakhodas, searchNakhoda, sortNakhoda]);
+    }, [nakhodas, searchNakhoda, sortNakhodaField, sortNakhodaOrder]);
 
     const processedInventaris = useMemo(() => {
         let data = [...inventaris];
@@ -112,12 +215,63 @@ const Laporan = () => {
             data = data.filter(item => item.kondisi?.toLowerCase() === filterKondisiInv.toLowerCase());
         }
         data.sort((a, b) => {
-            if (sortInv === 'Kode A-Z') return (a.kode_jaket || '').localeCompare(b.kode_jaket || '');
-            if (sortInv === 'Kode Z-A') return (b.kode_jaket || '').localeCompare(a.kode_jaket || '');
-            return 0;
+            let fieldA = '';
+            let fieldB = '';
+
+            if (sortInvField === 'kode_jaket') {
+                fieldA = a.kode_jaket?.toLowerCase() || '';
+                fieldB = b.kode_jaket?.toLowerCase() || '';
+            } else if (sortInvField === 'jenis') {
+                fieldA = a.jenis?.toLowerCase() || '';
+                fieldB = b.jenis?.toLowerCase() || '';
+            } else if (sortInvField === 'kondisi') {
+                fieldA = a.kondisi?.toLowerCase() || '';
+                fieldB = b.kondisi?.toLowerCase() || '';
+            } else if (sortInvField === 'lokasi') {
+                fieldA = a.lokasi_penyimpanan?.toLowerCase() || '';
+                fieldB = b.lokasi_penyimpanan?.toLowerCase() || '';
+            }
+
+            if (sortInvOrder === 'asc') return fieldA > fieldB ? 1 : -1;
+            return fieldA < fieldB ? 1 : -1;
         });
         return data;
-    }, [inventaris, searchInv, filterJenisInv, filterKondisiInv, sortInv]);
+    }, [inventaris, searchInv, filterJenisInv, filterKondisiInv, sortInvField, sortInvOrder]);
+
+    const processedAuditLogs = useMemo(() => {
+        let data = [...auditLogs];
+        if (searchLog) {
+            const q = searchLog.toLowerCase();
+            data = data.filter(log => 
+                (log.username || '').toLowerCase().includes(q) ||
+                (log.action || '').toLowerCase().includes(q) ||
+                (log.detail || '').toLowerCase().includes(q) ||
+                (log.target_label || '').toLowerCase().includes(q)
+            );
+        }
+        data.sort((a, b) => {
+            let fieldA = '';
+            let fieldB = '';
+
+            if (sortLogField === 'timestamp') {
+                fieldA = dayjs(a.timestamp).valueOf();
+                fieldB = dayjs(b.timestamp).valueOf();
+            } else if (sortLogField === 'username') {
+                fieldA = a.username?.toLowerCase() || '';
+                fieldB = b.username?.toLowerCase() || '';
+            } else if (sortLogField === 'action') {
+                fieldA = a.action?.toLowerCase() || '';
+                fieldB = b.action?.toLowerCase() || '';
+            } else if (sortLogField === 'module') {
+                fieldA = a.module?.toLowerCase() || '';
+                fieldB = b.module?.toLowerCase() || '';
+            }
+
+            if (sortLogOrder === 'asc') return fieldA > fieldB ? 1 : -1;
+            return fieldA < fieldB ? 1 : -1;
+        });
+        return data;
+    }, [auditLogs, searchLog, sortLogField, sortLogOrder]);
 
 
     // Export Helpers
@@ -221,24 +375,113 @@ const Laporan = () => {
         exportToExcel('Laporan Data Inventaris', data);
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
         <Box>
+            <style>
+                {`
+                    @media print {
+                        body * { visibility: hidden; }
+                        #print-area, #print-area * { visibility: visible; }
+                        #print-area { position: absolute; left: 0; top: 0; width: 100%; border: none; box-shadow: none; }
+                        .no-print { display: none !important; }
+                    }
+                `}
+            </style>
             <Box mb={4} display="flex" alignItems="center" gap={2}>
                 <FileText size={32} className="text-blue-600" />
                 <Typography variant="h5" fontWeight="900" color="primary.main">Pusat Laporan & Rekapitulasi</Typography>
             </Box>
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                <Tabs value={tabIndex} onChange={handleChangeTab} aria-label="Laporan Tabs" textColor="primary" indicatorColor="primary">
-                    <Tab label="1. Transaksi & Kepatuhan" sx={{ fontWeight: 'bold' }} />
-                    <Tab label="2. Kapal & Nakhoda" sx={{ fontWeight: 'bold' }} />
-                    <Tab label="3. Inventaris Jaket" sx={{ fontWeight: 'bold' }} />
+                <Tabs value={tabIndex} onChange={handleChangeTab} aria-label="Laporan Tabs" textColor="primary" indicatorColor="primary" variant="scrollable" scrollButtons="auto">
+                    <Tab label="1. Riwayat Transaksi" sx={{ fontWeight: 'bold' }} icon={<History size={16} />} iconPosition="start" />
+                    <Tab label="2. Transaksi Aktif" sx={{ fontWeight: 'bold' }} />
+                    <Tab label="3. Kapal & Nakhoda" sx={{ fontWeight: 'bold' }} />
+                    <Tab label="4. Inventaris Jaket" sx={{ fontWeight: 'bold' }} />
+                    <Tab label="5. Log Aktivitas" sx={{ fontWeight: 'bold' }} icon={<ClipboardList size={16} />} iconPosition="start" />
                 </Tabs>
             </Box>
 
-            {/* TAB 1: Transaksi & Kepatuhan */}
+            {/* TAB 0: Riwayat Transaksi */}
             {tabIndex === 0 && (
-                <Card sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <Card id="print-area" sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Box>
+                            <Typography variant="h6" fontWeight="800" mb={1}>Riwayat Seluruh Transaksi</Typography>
+                            <Typography variant="subtitle2" color="text.secondary">Daftar lengkap transaksi peminjaman dan pengembalian jaket.</Typography>
+                        </Box>
+                        <Box display="flex" gap={1} className="no-print">
+                            <Button variant="outlined" color="primary" startIcon={<Printer size={16}/>} onClick={handlePrint} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Cetak Laporan</Button>
+                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={() => exportToExcel('Riwayat_Transaksi', processedHistory)} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Excel</Button>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }} className="no-print">
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} md={6}>
+                                <TextField size="small" fullWidth label="Cari Nakhoda / Kapal / Status" value={searchHistory} onChange={(e) => setSearchHistory(e.target.value)} 
+                                    InputProps={{ startAdornment: <InputAdornment position="start"><Search size={18}/></InputAdornment> }} />
+                            </Grid>
+                            <Grid item xs={12} md={6} display="flex" justifyContent="flex-end">
+                                <TablePagination
+                                    component="div"
+                                    count={processedHistory.length}
+                                    page={pageHistory}
+                                    onPageChange={(e, newPage) => setPageHistory(newPage)}
+                                    rowsPerPage={rowsPerPageHistory}
+                                    onRowsPerPageChange={(e) => { setRowsPerPageHistory(parseInt(e.target.value, 10)); setPageHistory(0); }}
+                                    rowsPerPageOptions={[10, 50, 100, 250]} labelRowsPerPage="Baris:" />
+                            </Grid>
+                        </Grid>
+                    </Box>
+
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Table size="small">
+                            <TableHead sx={{ bgcolor: 'var(--color-primary-50)' }}>
+                                <TableRow>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortHistoryField === 'waktu_checkout'} direction={sortHistoryField === 'waktu_checkout' ? sortHistoryOrder : 'desc'} onClick={() => handleRequestSort(0, 'waktu_checkout')}>Pinjam</TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortHistoryField === 'waktu_checkin'} direction={sortHistoryField === 'waktu_checkin' ? sortHistoryOrder : 'asc'} onClick={() => handleRequestSort(0, 'waktu_checkin')}>Kembali</TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortHistoryField === 'nakhoda'} direction={sortHistoryField === 'nakhoda' ? sortHistoryOrder : 'asc'} onClick={() => handleRequestSort(0, 'nakhoda')}>Nakhoda (Kapal)</TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Unit</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortHistoryField === 'status'} direction={sortHistoryField === 'status' ? sortHistoryOrder : 'asc'} onClick={() => handleRequestSort(0, 'status')}>Status</TableSortLabel>
+                                    </TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {processedHistory.slice(pageHistory * rowsPerPageHistory, pageHistory * rowsPerPageHistory + rowsPerPageHistory).map((row) => (
+                                    <TableRow key={row.id}>
+                                        <TableCell sx={{ fontSize: '0.8rem' }}>{dayjs(row.waktu_checkout).format('DD/MM/YY HH:mm')}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.8rem' }}>{row.waktu_checkin ? dayjs(row.waktu_checkin).format('DD/MM/YY HH:mm') : '-'}</TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" fontWeight={700} fontSize="0.85rem">{row.Nakhoda?.nama_lengkap}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{row.Kapal?.nama_kapal}</Typography>
+                                        </TableCell>
+                                        <TableCell sx={{ fontSize: '0.8rem' }}>{row.jumlah_dewasa_dipinjam}D, {row.jumlah_anak_dipinjam}A</TableCell>
+                                        <TableCell>
+                                            <Chip label={row.status} size="small" variant="outlined" color={row.status === 'selesai' ? 'success' : 'primary'} sx={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '10px' }} />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Card>
+            )}
+
+            {/* TAB 1: Transaksi & Kepatuhan */}
+            {tabIndex === 1 && (
+                <Card id="print-area" sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Box>
                             <Typography variant="h6" fontWeight="800" mb={1}>Laporan Transaksi & Kepatuhan</Typography>
@@ -246,15 +489,16 @@ const Laporan = () => {
                                 Rekap data transaksi sirkulasi jaket yang saat ini masih dipinjam (Check-out Aktif).
                             </Typography>
                         </Box>
-                        <Box display="flex" gap={2}>
-                            <Button variant="outlined" color="error" startIcon={<Download size={16}/>} onClick={handleExportKepatuhanPDF} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Export PDF</Button>
-                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={handleExportKepatuhanExcel} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Export XLS</Button>
+                        <Box display="flex" gap={1} className="no-print">
+                            <Button variant="outlined" color="primary" startIcon={<Printer size={16}/>} onClick={handlePrint} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Cetak Laporan</Button>
+                            <Button variant="outlined" color="error" startIcon={<Download size={16}/>} onClick={handleExportKepatuhanPDF} sx={{ fontWeight: 'bold', borderRadius: 2 }}>PDF</Button>
+                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={handleExportKepatuhanExcel} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Excel</Button>
                         </Box>
                     </Box>
 
                     {/* Filter Bar Tab 1 */}
                     <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
-                        <Grid container spacing={2}>
+                        <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} md={4}>
                                 <TextField size="small" fullWidth label="Cari Nakhoda / Kapal" value={searchKepa} onChange={(e) => setSearchKepa(e.target.value)} 
                                     InputProps={{ startAdornment: <InputAdornment position="start"><Search size={18}/></InputAdornment> }} />
@@ -265,18 +509,24 @@ const Laporan = () => {
                                     <Select value={filterKepa} label="Filter Status Waktu" onChange={(e) => setFilterKepa(e.target.value)}>
                                         <MenuItem value="Semua">Semua Status</MenuItem>
                                         <MenuItem value="Aman">Aman (Sedang Berlayar)</MenuItem>
-                                        <MenuItem value="Terlambat">Terlambat (&gt; 12 Jam)</MenuItem>
+                                        <MenuItem value="Terlambat">Terlambat (&gt; 3 Hari)</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={4}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Urutkan Berdasarkan</InputLabel>
-                                    <Select value={sortKepa} label="Urutkan Berdasarkan" onChange={(e) => setSortKepa(e.target.value)}>
-                                        <MenuItem value="Terbaru">Waktu Pinjam: Terbaru</MenuItem>
-                                        <MenuItem value="Terlama">Waktu Pinjam: Terlama</MenuItem>
-                                    </Select>
-                                </FormControl>
+                            <Grid item xs={12} md={4} display="flex" justifyContent="flex-end">
+                                <TablePagination
+                                    component="div"
+                                    count={processedKepatuhan.length}
+                                    page={pageXKepa}
+                                    onPageChange={(e, newPage) => setPageXKepa(newPage)}
+                                    rowsPerPage={rowsPerPageKepa}
+                                    onRowsPerPageChange={(e) => {
+                                        setRowsPerPageKepa(parseInt(e.target.value, 10));
+                                        setPageXKepa(0);
+                                    }}
+                                    rowsPerPageOptions={[10, 50, 100, 250]}
+                                    labelRowsPerPage="Baris:"
+                                />
                             </Grid>
                         </Grid>
                     </Box>
@@ -285,14 +535,30 @@ const Laporan = () => {
                         <Table>
                             <TableHead sx={{ bgcolor: 'var(--color-primary-50)' }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Waktu Pinjam</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Nakhoda (Kapal)</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Jml Dipinjam</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Status Batas Waktu</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortKepaField === 'waktu_checkout'} direction={sortKepaField === 'waktu_checkout' ? sortKepaOrder : 'desc'} onClick={() => handleRequestSort(1, 'waktu_checkout')}>
+                                            Waktu Pinjam
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortKepaField === 'nakhoda'} direction={sortKepaField === 'nakhoda' ? sortKepaOrder : 'asc'} onClick={() => handleRequestSort(1, 'nakhoda')}>
+                                            Nakhoda (Kapal)
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortKepaField === 'jumlah'} direction={sortKepaField === 'jumlah' ? sortKepaOrder : 'asc'} onClick={() => handleRequestSort(1, 'jumlah')}>
+                                            Jml Dipinjam
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortKepaField === 'status'} direction={sortKepaField === 'status' ? sortKepaOrder : 'asc'} onClick={() => handleRequestSort(1, 'status')}>
+                                            Status Batas Waktu
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {processedKepatuhan.map((row) => {
+                                {processedKepatuhan.slice(pageXKepa * rowsPerPageKepa, pageXKepa * rowsPerPageKepa + rowsPerPageKepa).map((row) => {
                                     const isOverdue = dayjs().isAfter(dayjs(row.batas_waktu));
                                     return (
                                         <TableRow key={row.id}>
@@ -306,7 +572,7 @@ const Laporan = () => {
                                             </TableCell>
                                             <TableCell>
                                                 {isOverdue ? (
-                                                    <Chip label="Terlambat (Lebih 12 Jam)" color="error" size="small" sx={{ fontWeight: 'bold' }} />
+                                                    <Chip label="Terlambat (Lebih 3 Hari)" color="error" size="small" sx={{ fontWeight: 'bold' }} />
                                                 ) : (
                                                     <Chip label="Aman - Sedang Berlayar" color="primary" size="small" sx={{ fontWeight: 'bold' }} />
                                                 )}
@@ -324,8 +590,8 @@ const Laporan = () => {
             )}
 
             {/* TAB 2: Kapal & Nakhoda */}
-            {tabIndex === 1 && (
-                <Card sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            {tabIndex === 2 && (
+                <Card id="print-area" sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Box>
                             <Typography variant="h6" fontWeight="800">Laporan Data Kapal dan Nakhoda</Typography>
@@ -333,28 +599,34 @@ const Laporan = () => {
                                 Basis data armada dan nakhoda yang terdaftar di sistem.
                             </Typography>
                         </Box>
-                        <Box display="flex" gap={2}>
-                            <Button variant="outlined" color="error" startIcon={<Download size={16}/>} onClick={handleExportNakhodaPDF} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Export PDF</Button>
-                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={handleExportNakhodaExcel} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Export XLS</Button>
+                        <Box display="flex" gap={1} className="no-print">
+                            <Button variant="outlined" color="primary" startIcon={<Printer size={16}/>} onClick={handlePrint} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Cetak Laporan</Button>
+                            <Button variant="outlined" color="error" startIcon={<Download size={16}/>} onClick={handleExportNakhodaPDF} sx={{ fontWeight: 'bold', borderRadius: 2 }}>PDF</Button>
+                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={handleExportNakhodaExcel} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Excel</Button>
                         </Box>
                     </Box>
 
                     {/* Filter Bar Tab 2 */}
                     <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
-                        <Grid container spacing={2}>
+                        <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} md={6}>
                                 <TextField size="small" fullWidth label="Cari Nakhoda / Kapal" value={searchNakhoda} onChange={(e) => setSearchNakhoda(e.target.value)} 
                                     InputProps={{ startAdornment: <InputAdornment position="start"><Search size={18}/></InputAdornment> }} />
                             </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Urutkan Berdasarkan</InputLabel>
-                                    <Select value={sortNakhoda} label="Urutkan Berdasarkan" onChange={(e) => setSortNakhoda(e.target.value)}>
-                                        <MenuItem value="Nama A-Z">Nakhoda: A - Z</MenuItem>
-                                        <MenuItem value="Nama Z-A">Nakhoda: Z - A</MenuItem>
-                                        <MenuItem value="Kapasitas Terbesar">Kapasitas Kapal Terbesar</MenuItem>
-                                    </Select>
-                                </FormControl>
+                            <Grid item xs={12} md={6} display="flex" justifyContent="flex-end">
+                                <TablePagination
+                                    component="div"
+                                    count={processedNakhodas.length}
+                                    page={pageXNakhoda}
+                                    onPageChange={(e, newPage) => setPageXNakhoda(newPage)}
+                                    rowsPerPage={rowsPerPageNakhoda}
+                                    onRowsPerPageChange={(e) => {
+                                        setRowsPerPageNakhoda(parseInt(e.target.value, 10));
+                                        setPageXNakhoda(0);
+                                    }}
+                                    rowsPerPageOptions={[10, 50, 100, 250]}
+                                    labelRowsPerPage="Baris:"
+                                />
                             </Grid>
                         </Grid>
                     </Box>
@@ -363,13 +635,25 @@ const Laporan = () => {
                         <Table>
                             <TableHead sx={{ bgcolor: 'var(--color-primary-50)' }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Nakhoda (Kontak)</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Kapal (Pemilik)</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Kapasitas</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortNakhodaField === 'nama_lengkap'} direction={sortNakhodaField === 'nama_lengkap' ? sortNakhodaOrder : 'asc'} onClick={() => handleRequestSort(2, 'nama_lengkap')}>
+                                            Nakhoda (Kontak)
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortNakhodaField === 'kapal'} direction={sortNakhodaField === 'kapal' ? sortNakhodaOrder : 'asc'} onClick={() => handleRequestSort(2, 'kapal')}>
+                                            Kapal (Pemilik)
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortNakhodaField === 'kapasitas'} direction={sortNakhodaField === 'kapasitas' ? sortNakhodaOrder : 'asc'} onClick={() => handleRequestSort(2, 'kapasitas')}>
+                                            Kapasitas
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {processedNakhodas.map((row) => (
+                                {processedNakhodas.slice(pageXNakhoda * rowsPerPageNakhoda, pageXNakhoda * rowsPerPageNakhoda + rowsPerPageNakhoda).map((row) => (
                                     <TableRow key={row.id}>
                                         <TableCell>
                                             <Typography variant="body2" fontWeight={800}>{row.nama_lengkap}</Typography>
@@ -392,8 +676,8 @@ const Laporan = () => {
             )}
 
             {/* TAB 3: Inventaris Jaket */}
-            {tabIndex === 2 && (
-                <Card sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            {tabIndex === 3 && (
+                <Card id="print-area" sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Box>
                             <Typography variant="h6" fontWeight="800">Laporan Data Inventaris Jaket</Typography>
@@ -401,20 +685,21 @@ const Laporan = () => {
                                 Berisi Kode Jaket, Jenis, Kondisi, Lokasi, dan Keterangan Status.
                             </Typography>
                         </Box>
-                        <Box display="flex" gap={2}>
-                            <Button variant="outlined" color="error" startIcon={<Download size={16}/>} onClick={handleExportInventarisPDF} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Export PDF</Button>
-                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={handleExportInventarisExcel} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Export XLS</Button>
+                        <Box display="flex" gap={1} className="no-print">
+                            <Button variant="outlined" color="primary" startIcon={<Printer size={16}/>} onClick={handlePrint} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Cetak Laporan</Button>
+                            <Button variant="outlined" color="error" startIcon={<Download size={16}/>} onClick={handleExportInventarisPDF} sx={{ fontWeight: 'bold', borderRadius: 2 }}>PDF</Button>
+                            <Button variant="contained" color="success" startIcon={<Download size={16}/>} onClick={handleExportInventarisExcel} sx={{ fontWeight: 'bold', borderRadius: 2, boxShadow: 'none' }}>Excel</Button>
                         </Box>
                     </Box>
 
                     {/* Filter Bar Tab 3 */}
                     <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
-                        <Grid container spacing={2}>
+                        <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} md={3}>
                                 <TextField size="small" fullWidth label="Cari Kode Jaket/Lokasi" value={searchInv} onChange={(e) => setSearchInv(e.target.value)} 
                                     InputProps={{ startAdornment: <InputAdornment position="start"><Search size={18}/></InputAdornment> }} />
                             </Grid>
-                            <Grid item xs={12} md={3}>
+                            <Grid item xs={12} md={2}>
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>Filter Jenis</InputLabel>
                                     <Select value={filterJenisInv} label="Filter Jenis" onChange={(e) => setFilterJenisInv(e.target.value)}>
@@ -424,7 +709,7 @@ const Laporan = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={3}>
+                            <Grid item xs={12} md={2}>
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>Filter Kondisi</InputLabel>
                                     <Select value={filterKondisiInv} label="Filter Kondisi" onChange={(e) => setFilterKondisiInv(e.target.value)}>
@@ -435,14 +720,20 @@ const Laporan = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={3}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Urutkan Berdasarkan</InputLabel>
-                                    <Select value={sortInv} label="Urutkan Berdasarkan" onChange={(e) => setSortInv(e.target.value)}>
-                                        <MenuItem value="Kode A-Z">Kode Seri: A - Z</MenuItem>
-                                        <MenuItem value="Kode Z-A">Kode Seri: Z - A</MenuItem>
-                                    </Select>
-                                </FormControl>
+                            <Grid item xs={12} md={5} display="flex" justifyContent="flex-end">
+                                <TablePagination
+                                    component="div"
+                                    count={processedInventaris.length}
+                                    page={pageXInv}
+                                    onPageChange={(e, newPage) => setPageXInv(newPage)}
+                                    rowsPerPage={rowsPerPageInv}
+                                    onRowsPerPageChange={(e) => {
+                                        setRowsPerPageInv(parseInt(e.target.value, 10));
+                                        setPageXInv(0);
+                                    }}
+                                    rowsPerPageOptions={[10, 50, 100, 250]}
+                                    labelRowsPerPage="Baris:"
+                                />
                             </Grid>
                         </Grid>
                     </Box>
@@ -451,15 +742,31 @@ const Laporan = () => {
                         <Table>
                             <TableHead sx={{ bgcolor: 'var(--color-primary-50)' }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Kode Seri</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Jenis</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Kondisi</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Lokasi</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortInvField === 'kode_jaket'} direction={sortInvField === 'kode_jaket' ? sortInvOrder : 'asc'} onClick={() => handleRequestSort(3, 'kode_jaket')}>
+                                            Kode Seri
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortInvField === 'jenis'} direction={sortInvField === 'jenis' ? sortInvOrder : 'asc'} onClick={() => handleRequestSort(3, 'jenis')}>
+                                            Jenis
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortInvField === 'kondisi'} direction={sortInvField === 'kondisi' ? sortInvOrder : 'asc'} onClick={() => handleRequestSort(3, 'kondisi')}>
+                                            Kondisi
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortInvField === 'lokasi'} direction={sortInvField === 'lokasi' ? sortInvOrder : 'asc'} onClick={() => handleRequestSort(3, 'lokasi')}>
+                                            Lokasi
+                                        </TableSortLabel>
+                                    </TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>Catatan Insiden</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {processedInventaris.map((row) => (
+                                {processedInventaris.slice(pageXInv * rowsPerPageInv, pageXInv * rowsPerPageInv + rowsPerPageInv).map((row) => (
                                     <TableRow key={row.id}>
                                         <TableCell sx={{ fontWeight: 'bold' }}>{row.kode_jaket}</TableCell>
                                         <TableCell sx={{ textTransform: 'capitalize' }}>{row.jenis}</TableCell>
@@ -473,6 +780,128 @@ const Laporan = () => {
                                 ))}
                                 {processedInventaris.length === 0 && (
                                     <TableRow><TableCell colSpan={5} align="center">Tidak mendapati inventaris yang sesuai kriteria.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Card>
+            )}
+
+            {/* TAB 4: Log Aktivitas (Audit Log) */}
+            {tabIndex === 4 && (
+                <Card id="print-area" sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Box>
+                            <Typography variant="h6" fontWeight="800">Log Aktivitas Manajemen Kapal</Typography>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                Catatan audit seluruh aktivitas CRUD yang dilakukan oleh pengguna di modul Manajemen Data Kapal.
+                            </Typography>
+                        </Box>
+                        <Box display="flex" gap={1} className="no-print">
+                            <Button variant="outlined" color="primary" startIcon={<Printer size={16}/>} onClick={handlePrint} sx={{ fontWeight: 'bold', borderRadius: 2 }}>Cetak Laporan</Button>
+                        </Box>
+                    </Box>
+
+                    {/* Search */}
+                    <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} md={6}>
+                                <TextField size="small" fullWidth label="Cari User / Aksi / Keterangan" value={searchLog} onChange={(e) => setSearchLog(e.target.value)}
+                                    InputProps={{ startAdornment: <InputAdornment position="start"><Search size={18}/></InputAdornment> }} />
+                            </Grid>
+                            <Grid item xs={12} md={6} display="flex" justifyContent="flex-end">
+                                <TablePagination
+                                    component="div"
+                                    count={processedAuditLogs.length}
+                                    page={pageXLog}
+                                    onPageChange={(e, newPage) => setPageXLog(newPage)}
+                                    rowsPerPage={rowsPerPageLog}
+                                    onRowsPerPageChange={(e) => {
+                                        setRowsPerPageLog(parseInt(e.target.value, 10));
+                                        setPageXLog(0);
+                                    }}
+                                    rowsPerPageOptions={[10, 50, 100, 250]}
+                                    labelRowsPerPage="Baris:"
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Table>
+                            <TableHead sx={{ bgcolor: 'var(--color-primary-50)' }}>
+                                <TableRow>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortLogField === 'timestamp'} direction={sortLogField === 'timestamp' ? sortLogOrder : 'desc'} onClick={() => handleRequestSort(4, 'timestamp')}>
+                                            Waktu
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortLogField === 'username'} direction={sortLogField === 'username' ? sortLogOrder : 'asc'} onClick={() => handleRequestSort(4, 'username')}>
+                                            User
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortLogField === 'action'} direction={sortLogField === 'action' ? sortLogOrder : 'asc'} onClick={() => handleRequestSort(4, 'action')}>
+                                            Aksi
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>
+                                        <TableSortLabel active={sortLogField === 'module'} direction={sortLogField === 'module' ? sortLogOrder : 'asc'} onClick={() => handleRequestSort(4, 'module')}>
+                                            Modul
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Target</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Keterangan</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {processedAuditLogs
+                                    .slice(pageXLog * rowsPerPageLog, pageXLog * rowsPerPageLog + rowsPerPageLog)
+                                    .map((log) => {
+                                        const actionColor = {
+                                            'CREATE': 'success',
+                                            'UPDATE': 'primary',
+                                            'DELETE': 'error',
+                                            'DELETE_BLOCKED': 'warning'
+                                        };
+                                        const actionLabel = {
+                                            'CREATE': 'Tambah',
+                                            'UPDATE': 'Edit',
+                                            'DELETE': 'Hapus',
+                                            'DELETE_BLOCKED': 'Hapus Ditolak'
+                                        };
+                                        return (
+                                            <TableRow key={log.id}>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                    {dayjs(log.timestamp).format('DD MMM YYYY, HH:mm:ss')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" fontWeight={800}>{log.username}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip 
+                                                        label={actionLabel[log.action] || log.action} 
+                                                        color={actionColor[log.action] || 'default'} 
+                                                        size="small" 
+                                                        sx={{ fontWeight: 'bold' }} 
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip label={log.module} size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" fontWeight="bold">{log.target_label || '-'}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="caption" color="text.secondary">{log.detail || '-'}</Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                }
+                                {auditLogs.length === 0 && (
+                                    <TableRow><TableCell colSpan={6} align="center">Belum ada log aktivitas tercatat.</TableCell></TableRow>
                                 )}
                             </TableBody>
                         </Table>

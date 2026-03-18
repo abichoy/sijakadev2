@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Ship, LayoutDashboard, SendToBack, BookOpen, Layers, BarChart, FileText, Search, Settings, Bell, Clock, X } from 'lucide-react';
+import { Ship, LayoutDashboard, SendToBack, BookOpen, Layers, BarChart, FileText, Search, Settings, Bell, Clock, X, Users, ShieldCheck } from 'lucide-react';
 import { AppBar, Toolbar, IconButton, Typography, Avatar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, InputBase, Badge, Divider, Paper, CircularProgress, ClickAwayListener, Chip } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { useAuth } from '../context/AuthContext';
@@ -62,11 +62,12 @@ const MainLayout = () => {
     const navItems = [
         { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={22} />, roles: ['petugas', 'admin'] },
         { name: 'Kapal', path: '/kapal', icon: <Ship size={22} />, roles: ['admin'] },
-        { name: 'Nakhoda', path: '/nakhoda', icon: <Settings size={22} />, roles: ['admin'] },
+        { name: 'Nakhoda', path: '/nakhoda', icon: <Users size={22} />, roles: ['admin'] },
         { name: 'Inventaris', path: '/inventaris', icon: <Layers size={22} />, roles: ['admin', 'petugas'] },
         { name: 'Peminjaman', path: '/checkout', icon: <SendToBack size={22} />, roles: ['petugas', 'admin'] },
         { name: 'Laporan', path: '/laporan', icon: <BarChart size={22} />, roles: ['admin'] },
         { name: 'Edukasi', path: '/edukasi', icon: <BookOpen size={22} />, roles: ['petugas', 'admin'] },
+        { name: 'Pengaturan', path: '/pengaturan', icon: <ShieldCheck size={22} />, roles: ['admin'] },
     ];
 
     const filteredNav = navItems.filter(item => item.roles.includes(user?.role));

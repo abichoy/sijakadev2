@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, MenuItem, Autocomplete, Snackbar, Alert } from '@mui/material';
-import { Plus, Edit2, Trash2, Printer, Camera, Upload, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Printer, Camera, Upload, X, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, MenuItem, Autocomplete, Snackbar, Alert, TableSortLabel, InputAdornment, Tooltip } from '@mui/material';
 import axios from 'axios';
 import Webcam from 'react-webcam';
 
@@ -19,6 +19,34 @@ const Nakhoda = () => {
     // UI States
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+    const [restrictedDeleteOpen, setRestrictedDeleteOpen] = useState(false);
+    const [activeLoanDialogOpen, setActiveLoanDialogOpen] = useState(false);
+
+    // Sorting state
+    const [sortField, setSortField] = useState('nama_lengkap');
+    const [sortDirection, setSortDirection] = useState('asc');
+
+    const handleRequestSort = (field) => {
+        const isAsc = sortField === field && sortDirection === 'asc';
+        setSortDirection(isAsc ? 'desc' : 'asc');
+        setSortField(field);
+    };
+
+    const sortedData = [...data].sort((a, b) => {
+        let valA, valB;
+        if (sortField === 'kapal') {
+            valA = a.Kapal?.nama_kapal || '';
+            valB = b.Kapal?.nama_kapal || '';
+        } else {
+            valA = a[sortField] || '';
+            valB = b[sortField] || '';
+        }
+
+        if (typeof valA === 'string') {
+            return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return sortDirection === 'asc' ? valA - valB : valB - valA;
+    });
 
     // Not implementing true file upload for simplificty without Multer setup overhead.
 
@@ -40,6 +68,12 @@ const Nakhoda = () => {
 
     const handleOpen = (item = null) => {
         if (item) {
+            // Check for active loans
+            if (item.TransaksiPeminjamans && item.TransaksiPeminjamans.length > 0) {
+                setActiveLoanDialogOpen(true);
+                return;
+            }
+
             setEditMode(true);
             setFormData({ 
                 id: item.id, 
@@ -47,12 +81,12 @@ const Nakhoda = () => {
                 kontak: item.kontak || '', 
                 kapal_id: item.kapal_id || '' 
             });
-            setFotoPreview(item.foto ? `${import.meta.env.VITE_API_URL}${item.foto}` : '');
+            setFotoPreview(item.foto ? `${import.meta.env.VITE_API_URL}${item.foto}` : `${import.meta.env.VITE_API_URL}/uploads/nakhoda_default.png`);
             setFotoFile(null);
         } else {
             setEditMode(false);
             setFormData({ id: null, nama_lengkap: '', kontak: '', kapal_id: '' });
-            setFotoPreview('');
+            setFotoPreview(`${import.meta.env.VITE_API_URL}/uploads/nakhoda_default.png`);
             setFotoFile(null);
         }
         setOpenDialog(true);
@@ -89,6 +123,10 @@ const Nakhoda = () => {
     };
 
     const handleSave = async () => {
+        if (!formData.nama_lengkap) {
+            setSnackbar({ open: true, message: 'Nama lengkap tidak boleh kosong', severity: 'error' });
+            return;
+        }
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('nama_lengkap', formData.nama_lengkap);
@@ -115,8 +153,12 @@ const Nakhoda = () => {
         }
     };
 
-    const handleDeleteClick = (id) => {
-        setDeleteDialog({ open: true, id });
+    const handleDeleteClick = (row) => {
+        if (row.kapal_id) {
+            setRestrictedDeleteOpen(true);
+        } else {
+            setDeleteDialog({ open: true, id: row.id });
+        }
     };
 
     const confirmDelete = async () => {
@@ -174,15 +216,47 @@ const Nakhoda = () => {
                 <Table>
                     <TableHead sx={{ bgcolor: 'var(--color-primary-50)' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }}>ID Unik / QR Code</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Nama Nakhoda</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Kapal yang Dibawa</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Kontak</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
+                                <TableSortLabel
+                                    active={sortField === 'id'}
+                                    direction={sortField === 'id' ? sortDirection : 'asc'}
+                                    onClick={() => handleRequestSort('id')}
+                                >
+                                    ID Unik / QR Code
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
+                                <TableSortLabel
+                                    active={sortField === 'nama_lengkap'}
+                                    direction={sortField === 'nama_lengkap' ? sortDirection : 'asc'}
+                                    onClick={() => handleRequestSort('nama_lengkap')}
+                                >
+                                    Nama Nakhoda
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
+                                <TableSortLabel
+                                    active={sortField === 'kapal'}
+                                    direction={sortField === 'kapal' ? sortDirection : 'asc'}
+                                    onClick={() => handleRequestSort('kapal')}
+                                >
+                                    Kapal yang Dibawa
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
+                                <TableSortLabel
+                                    active={sortField === 'kontak'}
+                                    direction={sortField === 'kontak' ? sortDirection : 'asc'}
+                                    onClick={() => handleRequestSort('kontak')}
+                                >
+                                    Kontak
+                                </TableSortLabel>
+                            </TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }} align="right">Aksi</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {data.map((row) => (
+                        {sortedData.map((row) => (
                             <TableRow key={row.id}>
                                 <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                     <Box display="flex" alignItems="center" gap={1}>
@@ -192,12 +266,12 @@ const Nakhoda = () => {
                                     </Box>
                                 </TableCell>
                                 <TableCell>{row.nama_lengkap}</TableCell>
-                                <TableCell>{row.Kapal?.nama_kapal || '-'}</TableCell>
+                                <TableCell>{row.Kapal?.nama_kapal || 'Belum ada'}</TableCell>
                                 <TableCell>{row.kontak || '-'}</TableCell>
                                 <TableCell align="right">
                                     <IconButton color="secondary" onClick={() => handlePrintKartu(row.id)} title="Cetak Kartu Nakhoda"><Printer size={18} /></IconButton>
                                     <IconButton color="primary" onClick={() => handleOpen(row)}><Edit2 size={18} /></IconButton>
-                                    <IconButton color="error" onClick={() => handleDeleteClick(row.id)}><Trash2 size={18} /></IconButton>
+                                    <IconButton color="error" onClick={() => handleDeleteClick(row)}><Trash2 size={18} /></IconButton>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -212,17 +286,29 @@ const Nakhoda = () => {
                 <DialogTitle fontWeight="800">{editMode ? 'Edit' : 'Tambah'} Nakhoda</DialogTitle>
                 <DialogContent>
                     <Box pt={1} display="flex" flexDirection="column" gap={2}>
-                        <TextField label="Nama Lengkap" fullWidth value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
-                        <Autocomplete
-                            options={kapalList}
-                            getOptionLabel={(option) => option.nama_kapal || ''}
-                            value={kapalList.find(k => k.id === formData.kapal_id) || null}
-                            onChange={(event, newValue) => {
-                                setFormData({...formData, kapal_id: newValue ? newValue.id : ''});
-                            }}
-                            isOptionEqualToValue={(option, value) => option.id === value.id}
-                            renderInput={(params) => <TextField {...params} label="Pilih Kapal (Ketik untuk mencari)" fullWidth />}
-                        />
+                        <TextField label="Nama Lengkap" fullWidth value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value.toUpperCase()})} inputProps={{ style: { textTransform: 'uppercase' } }} />
+                        <Box display="flex" gap={1} alignItems="flex-start">
+                            <Autocomplete
+                                fullWidth
+                                options={kapalList.filter(k => !k.Nakhoda || k.id === formData.kapal_id)}
+                                getOptionLabel={(option) => option.nama_kapal || ''}
+                                value={kapalList.find(k => k.id === formData.kapal_id) || null}
+                                onChange={(event, newValue) => {
+                                    setFormData({...formData, kapal_id: newValue ? newValue.id : ''});
+                                }}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                renderInput={(params) => <TextField {...params} label="Pilih Kapal (Ketik untuk mencari)" fullWidth />}
+                            />
+                            <Tooltip title="Reset/Putuskan Relasi Kapal">
+                                <IconButton 
+                                    sx={{ mt: 1, bgcolor: 'slate.100', '&:hover': { bgcolor: 'slate.200' } }} 
+                                    onClick={() => setFormData({...formData, kapal_id: ''})}
+                                    disabled={!formData.kapal_id}
+                                >
+                                    <RefreshCw size={20} />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
                         <TextField label="Nomor Kontak (Opsional)" fullWidth value={formData.kontak} onChange={e => setFormData({...formData, kontak: e.target.value})} />
                         
                         <Box sx={{ p: 2, border: '1px dashed #ccc', borderRadius: 2, textAlign: 'center' }}>
@@ -273,6 +359,67 @@ const Nakhoda = () => {
                 <DialogActions sx={{ p: 3 }}>
                     <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>Batal</Button>
                     <Button onClick={handleSave} variant="contained" sx={{ borderRadius: 2 }}>Simpan</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Restricted Delete Warning */}
+            <Dialog 
+                open={restrictedDeleteOpen} 
+                onClose={() => setRestrictedDeleteOpen(false)}
+                PaperProps={{ sx: { borderRadius: '20px', maxWidth: '400px', p: 1 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#dc2626', fontWeight: 900 }}>
+                    <ShieldAlert size={28} />
+                    AKSI DITOLAK!
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1" fontWeight="600" gutterBottom>
+                        Data Nakhoda ini tidak dapat dihapus karena masih memiliki relasi aktif ke data kapal.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Silakan lakukan **EDIT** data nakhoda ini, kemudian klik tombol **RESET RELASI** (ikon putar) disamping pilihan kapal untuk memutuskan hubungannya sebelum menghapus.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button 
+                        fullWidth 
+                        variant="contained" 
+                        onClick={() => setRestrictedDeleteOpen(false)}
+                        sx={{ bgcolor: '#dc2626', py: 1.5, borderRadius: '12px', fontWeight: 900, '&:hover': { bgcolor: '#b91c1c' } }}
+                    >
+                        SAYA MENGERTI
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Active Loan Warning */}
+            <Dialog 
+                open={activeLoanDialogOpen} 
+                onClose={() => setActiveLoanDialogOpen(false)}
+                PaperProps={{ sx: { borderRadius: '20px', maxWidth: '400px', p: 1 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#f59e0b', fontWeight: 900 }}>
+                    <ShieldAlert size={28} />
+                    AKSES DIBATASI
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1" fontWeight="600" gutterBottom>
+                        Data Nakhoda ini tidak dapat diedit saat ini.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Nakhoda ini sedang **MEMINJAM JAKET KESELAMATAN** / belum mengembalikan jaket. 
+                        Silakan selesaikan pengembalian jaket (Check-In) terlebih dahulu di menu peminjaman sebelum dapat mengubah data nakhoda ini.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button 
+                        fullWidth 
+                        variant="contained" 
+                        onClick={() => setActiveLoanDialogOpen(false)}
+                        sx={{ bgcolor: '#f59e0b', py: 1.5, borderRadius: '12px', fontWeight: 900, '&:hover': { bgcolor: '#d97706' } }}
+                    >
+                        MENGERTI
+                    </Button>
                 </DialogActions>
             </Dialog>
 

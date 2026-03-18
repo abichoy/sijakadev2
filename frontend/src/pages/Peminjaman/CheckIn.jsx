@@ -6,10 +6,11 @@ const CheckIn = () => {
     const [activeStep, setActiveStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
-    
+    const [successMsg, setSuccessMsg] = useState('');
+
     // Data list from backend
     const [activeLoans, setActiveLoans] = useState([]);
-    
+
     // Process states
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedLoan, setSelectedLoan] = useState(null);
@@ -45,13 +46,13 @@ const CheckIn = () => {
     const filteredLoans = activeLoans.filter(loan => {
         const query = searchQuery.toLowerCase();
         return loan.Nakhoda?.nama_lengkap?.toLowerCase().includes(query) ||
-               loan.Kapal?.nama_kapal?.toLowerCase().includes(query);
+            loan.Kapal?.nama_kapal?.toLowerCase().includes(query);
     });
 
     const handleSelectLoan = (transId) => {
         const loan = activeLoans.find(l => l.id === transId);
         if (!loan) return;
-        
+
         setSelectedLoan(loan);
         // default kondisi semua = baik
         const initInspeksi = loan.DetailPeminjaman.map(d => ({
@@ -80,14 +81,16 @@ const CheckIn = () => {
             const payload = {
                 kondisi_per_jaket: inspeksi.map(i => ({ jaket_id: i.jaket_id, kondisi: i.kondisi, catatan: i.catatan }))
             };
-            
+
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/peminjaman/checkin/${selectedLoan.id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             if (res.data.success) {
-                alert('Pengembalian Berhasil Diproses!');
-                window.location.reload();
+                setSuccessMsg('Pengembalian Berhasil Diproses! Stok telah diperbarui.');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             }
         } catch (error) {
             setErrorMsg(error.response?.data?.message || 'Error saat check-in');
@@ -101,10 +104,12 @@ const CheckIn = () => {
             <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 6 }}>
                 {steps.map((label) => (
                     <Step key={label}>
-                        <StepLabel StepIconProps={{ sx: { 
-                            '&.Mui-active': { color: 'primary.main' }, 
-                            '&.Mui-completed': { color: 'success.main' }
-                        }}}>
+                        <StepLabel StepIconProps={{
+                            sx: {
+                                '&.Mui-active': { color: 'primary.main' },
+                                '&.Mui-completed': { color: 'success.main' }
+                            }
+                        }}>
                             <Typography fontWeight={activeStep >= steps.indexOf(label) ? 800 : 500}>{label}</Typography>
                         </StepLabel>
                     </Step>
@@ -116,7 +121,7 @@ const CheckIn = () => {
                 {activeStep === 0 && (
                     <Box>
                         <Box display="flex" alignItems="center" gap={2} mb={4}>
-                            <Search size={28} className="text-blue-500"/>
+                            <Search size={28} className="text-blue-500" />
                             <Typography variant="h6" fontWeight={800}>Data Peminjaman Aktif</Typography>
                         </Box>
 
@@ -129,7 +134,7 @@ const CheckIn = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             sx={{ mb: 4 }}
                         />
-                        
+
                         {loading ? (
                             <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
                         ) : activeLoans.length === 0 ? (
@@ -173,7 +178,7 @@ const CheckIn = () => {
                         </Box>
 
                         <Typography variant="h6" fontWeight={800} mb={3}>Inspeksi Fisik Jaket</Typography>
-                        
+
                         <TableContainer component={Paper} variant="outlined" sx={{ mb: 4, borderRadius: 3 }}>
                             <Table>
                                 <TableHead sx={{ bgcolor: 'var(--color-slate-100)' }}>
@@ -190,19 +195,17 @@ const CheckIn = () => {
                                             <TableCell>{item.kode_jaket}</TableCell>
                                             <TableCell sx={{ textTransform: 'capitalize' }}>{item.jenis}</TableCell>
                                             <TableCell>
-                                                <TextField 
-                                                    select 
-                                                    size="small" 
+                                                <TextField
+                                                    select
+                                                    size="small"
                                                     fullWidth
                                                     value={item.kondisi}
                                                     onChange={e => handleUpdateKondisi(item.jaket_id, e.target.value)}
                                                     color={item.kondisi === 'baik' ? 'success' : 'error'}
                                                 >
-                                                    <MenuItem value="baik" sx={{ color: 'success.main', fontWeight: 'bold' }}>Tersedia (Sempurna)</MenuItem>
-                                                    <MenuItem value="robek">Rusak / Robek</MenuItem>
-                                                    <MenuItem value="berjamur">Rusak / Berjamur parah</MenuItem>
-                                                    <MenuItem value="gesper_rusak">Rusak / Tali/Gesper Putus</MenuItem>
-                                                    <MenuItem value="hilang" sx={{ color: 'error.main', fontWeight: 'bold' }}>Hilang Tercelup/Jatuh</MenuItem>
+                                                    <MenuItem value="baik" sx={{ color: 'success.main', fontWeight: 'bold' }}>Tersedia (Baik)</MenuItem>
+                                                    <MenuItem value="rusak">Rusak</MenuItem>
+                                                    <MenuItem value="hilang" sx={{ color: 'error.main', fontWeight: 'bold' }}>Hilang</MenuItem>
                                                 </TextField>
                                             </TableCell>
                                             <TableCell sx={{ minWidth: 220 }}>
@@ -226,7 +229,7 @@ const CheckIn = () => {
 
                         <Box display="flex" gap={2} justifyContent="flex-end" mt={2} pt={3} borderTop="1px solid" borderColor="divider">
                             <Button variant="outlined" onClick={handleBack} sx={{ borderRadius: '12px', px: 4, fontWeight: 'bold' }}>Beranda</Button>
-                            <Button variant="contained" color="success" onClick={handleSubmitCheckIn} disabled={loading} startIcon={<LogIn/>} sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 'extrabold', fontSize: '1rem' }}>
+                            <Button variant="contained" color="success" onClick={handleSubmitCheckIn} disabled={loading} startIcon={<LogIn />} sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 'extrabold', fontSize: '1rem' }}>
                                 {loading ? 'Memproses...' : 'Selesaikan Transaksi & Update Stok'}
                             </Button>
                         </Box>
@@ -237,6 +240,12 @@ const CheckIn = () => {
             <Snackbar open={!!errorMsg} autoHideDuration={6000} onClose={() => setErrorMsg('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
                 <Alert onClose={() => setErrorMsg('')} severity="error" sx={{ width: '100%', borderRadius: 2, fontWeight: 'bold' }} variant="filled">
                     {errorMsg}
+                </Alert>
+            </Snackbar>
+
+            <Snackbar open={!!successMsg} autoHideDuration={2000} onClose={() => setSuccessMsg('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert severity="success" sx={{ width: '100%', borderRadius: 3, fontWeight: '900', boxShadow: '0 8px 30px rgba(34, 197, 94, 0.4)' }} variant="filled">
+                    {successMsg}
                 </Alert>
             </Snackbar>
         </Box>
