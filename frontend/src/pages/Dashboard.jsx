@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, Card, CardContent, Grid, Fab, Table, TableBody, TableCell, TableHead, TableRow, Paper, Avatar } from '@mui/material';
-import { SendToBack, Package, Navigation, AlertTriangle, UserCircle, Settings } from 'lucide-react';
+import { SendToBack, Package, Navigation, AlertTriangle, UserCircle, Settings, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -54,7 +54,8 @@ const Dashboard = () => {
     const cards = [
         { title: 'Tersedia', value: stok.tersedia, icon: <Package size={32} />, color: '#10b981', gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' },
         { title: 'Dipinjam', value: stok.dipinjam, icon: <Navigation size={32} />, color: '#3b82f6', gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' },
-        { title: 'Rusak / Hilang', value: stok.rusak + stok.hilang, icon: <AlertTriangle size={32} />, color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
+        { title: 'Rusak', value: stok.rusak, icon: <AlertTriangle size={32} />, color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
+        { title: 'Hilang', value: stok.hilang, icon: <AlertCircle size={32} />, color: '#ef4444', gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' },
         { title: 'Peminjaman Hari Ini', value: peminjamanHariIni, icon: <SendToBack size={32} />, color: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' },
     ];
 
@@ -77,9 +78,9 @@ const Dashboard = () => {
                 <Typography variant="subtitle1" color="text.secondary" fontWeight="500">Ringkasan ketersediaan jaket dan log aktivitas dermaga.</Typography>
             </Box>
 
-            <Grid container spacing={3} mb={4}>
+            <Grid container spacing={2.5} mb={4} columns={{ xs: 12, sm: 6, md: 10 }}>
                 {cards.map((card, idx) => (
-                    <Grid item xs={12} sm={6} md={3} key={idx}>
+                    <Grid item xs={12} sm={idx === 4 ? 12 : 6} md={2} key={idx}>
                         <Card sx={{ 
                             borderRadius: '24px', 
                             background: card.gradient,
