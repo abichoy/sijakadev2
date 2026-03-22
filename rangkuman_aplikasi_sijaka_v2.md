@@ -1,3 +1,9 @@
+Refer to [prd.md] (prd.md) Make me the Ul screen for the dashboard first using paper in gpt5.4-inv file.
+
+Lihat [prd.md] (prd.md) buatkan saya layar Ul untuk dashboard terlebih dahulu menggunakan paper dalam file gpt5.4-inv.
+
+Lihat [sijaka_prd.md] (sijaka_prd.md) buatkan saya Ul screen untuk semua aplikasi yang ada didalam sijaka_prd.md menggunakan paper dalam file gpt5.4-inv.
+
 # Project Requirements Document (PRD): SiJaka
 
 **Nama Aplikasi:** SiJaka - Sistem Informasi Jaket Keselamatan Kapal  
@@ -52,8 +58,8 @@ Berdasarkan analisis teknis pada `AuthContext.jsx` dan `init_db.sql`:
 
 ### D. Transaksi CHECK-OUT (Pinjam Baru)
 *   **Workflow:**
-    1.  Cari Nakhoda/Kapal (via dropdown atau scan).
-    2.  Pilih unit jaket (Dewasa & Anak).
+    1.  Cari Nakhoda/Kapal (via dropdown/manual atau scan qrcode).
+    2.  Pilih unit jaket (Dewasa & Anak-anak).
     3.  Persetujuan Pakta Integritas.
     4.  Submit Transaksi.
 *   **Logika Bisnis & Validasi:**
@@ -72,6 +78,9 @@ Berdasarkan analisis teknis pada `AuthContext.jsx` dan `init_db.sql`:
 ### F. Edukasi Maritim (Multi-Bahasa)
 *   **Fitur Unik:** Menyediakan panduan keselamatan dalam 3 bahasa: **Indonesia, Bugis, dan Makassar**.
 *   **Tujuan:** Menghilangkan hambatan komunikasi dan mitos "Pammali" (larangan adat) melalui pendekatan kearifan lokal.
+
+### G. Pengaturan
+*   **Fungsi:** Profil Pengguna & Manajemen Pengguna (CRUD Admin).
 
 ---
 

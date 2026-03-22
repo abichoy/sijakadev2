@@ -23,7 +23,7 @@ const Dashboard = () => {
                 const stokRes = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard/stok`, config);
                 const pRes = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard/peminjaman-hari-ini`, config);
                 const kRes = await axios.get(`${import.meta.env.VITE_API_URL}/laporan/kepatuhan`, config);
-                
+
                 if (stokRes.data.success) {
                     let st = { tersedia: 0, dipinjam: 0, rusak: 0, hilang: 0 };
                     stokRes.data.data.forEach(item => {
@@ -35,7 +35,7 @@ const Dashboard = () => {
                     });
                     setStok(st);
                 }
-                
+
                 if (pRes.data.success) {
                     setPeminjamanHariIni(pRes.data.data);
                 }
@@ -81,8 +81,8 @@ const Dashboard = () => {
             <Grid container spacing={2.5} mb={4} columns={{ xs: 12, sm: 6, md: 10 }}>
                 {cards.map((card, idx) => (
                     <Grid item xs={12} sm={idx === 4 ? 12 : 6} md={2} key={idx}>
-                        <Card sx={{ 
-                            borderRadius: '24px', 
+                        <Card sx={{
+                            borderRadius: '24px',
                             background: card.gradient,
                             color: 'white',
                             position: 'relative',
@@ -111,14 +111,14 @@ const Dashboard = () => {
                     <Card sx={{ borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', height: '100%', p: 3 }}>
                         <Typography variant="h6" fontWeight="800" mb={3}>Grafik Ketersediaan Inventaris</Typography>
                         <Box sx={{ height: 350, display: 'flex', justifyContent: 'center' }}>
-                            <Bar 
-                                data={chartData} 
-                                options={{ 
-                                    responsive: true, 
+                            <Bar
+                                data={chartData}
+                                options={{
+                                    responsive: true,
                                     maintainAspectRatio: false,
                                     plugins: { legend: { position: 'top' } },
                                     scales: { y: { beginAtZero: true } }
-                                }} 
+                                }}
                             />
                         </Box>
                     </Card>
@@ -132,7 +132,7 @@ const Dashboard = () => {
                                 <AlertTriangle size={20} />
                             </Box>
                         </Box>
-                        
+
                         {kepatuhan.length === 0 ? (
                             <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height={250} opacity={0.5}>
                                 <Settings size={48} />
@@ -159,16 +159,16 @@ const Dashboard = () => {
             </Grid>
 
             {/* Floating Action Button for Checkout (Tactile UI) */}
-            <Fab 
-                color="primary" 
-                aria-label="add" 
+            <Fab
+                color="primary"
+                aria-label="add"
                 onClick={() => navigate('/checkout')}
-                sx={{ 
-                    position: 'fixed', 
-                    bottom: 40, 
-                    right: 40, 
-                    width: 72, 
-                    height: 72, 
+                sx={{
+                    position: 'fixed',
+                    bottom: 40,
+                    right: 40,
+                    width: 72,
+                    height: 72,
                     boxShadow: '0 10px 30px rgba(0,99,156,0.4)',
                     background: 'linear-gradient(135deg, #00639C 0%, #1e3a8a 100%)',
                     '&:hover': { transform: 'scale(1.05)' }

@@ -125,16 +125,16 @@ const MainLayout = () => {
                     axios.get(`${import.meta.env.VITE_API_URL}/kapal`, { headers: { Authorization: `Bearer ${token}` } }),
                     axios.get(`${import.meta.env.VITE_API_URL}/nakhoda`, { headers: { Authorization: `Bearer ${token}` } })
                 ]);
-                
+
                 const q = searchQuery.toLowerCase();
                 const kapals = kapalRes.data.data
                     .filter(k => k.nama_kapal.toLowerCase().includes(q) || k.pemilik.toLowerCase().includes(q))
                     .map(k => ({ id: k.id_kapal, title: k.nama_kapal, subtitle: `Pemilik: ${k.pemilik}`, type: 'Kapal', path: '/kapal' }));
-                    
+
                 const nakhodas = nakhodaRes.data.data
                     .filter(n => n.nama_lengkap.toLowerCase().includes(q))
                     .map(n => ({ id: n.id_nakhoda, title: n.nama_lengkap, subtitle: `Kontak: ${n.kontak || '-'}`, type: 'Nakhoda', path: '/nakhoda' }));
-                
+
                 setSearchResults([...kapals, ...nakhodas].slice(0, 6));
             } catch (err) {
                 console.error('Search error', err);
@@ -164,14 +164,14 @@ const MainLayout = () => {
                     <Typography variant="caption" color="primary.light" sx={{ textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: 1.5 }}>Maccini Baji</Typography>
                 </Box>
             </Box>
-            
+
             <List sx={{ flexGrow: 1, px: 2, pt: 3 }}>
                 {filteredNav.map((item) => {
                     const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
                     return (
-                        <ListItem 
-                            key={item.path} 
-                            component={Link} 
+                        <ListItem
+                            key={item.path}
+                            component={Link}
                             to={item.path}
                             sx={{
                                 mb: 1,
@@ -191,9 +191,9 @@ const MainLayout = () => {
                             <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
                                 {item.icon}
                             </ListItemIcon>
-                            <ListItemText 
-                                primary={item.name} 
-                                primaryTypographyProps={{ fontWeight: isActive ? 800 : 600, fontSize: '0.95rem' }} 
+                            <ListItemText
+                                primary={item.name}
+                                primaryTypographyProps={{ fontWeight: isActive ? 800 : 600, fontSize: '0.95rem' }}
                             />
                         </ListItem>
                     );
@@ -201,17 +201,17 @@ const MainLayout = () => {
             </List>
 
             <Divider />
-            
+
             <Box sx={{ p: 3 }}>
                 {/* Profile - navigate to settings */}
-                <Box 
+                <Box
                     className="flex items-center gap-3 p-3 rounded-2xl hover:bg-blue-50 cursor-pointer transition-colors border border-transparent hover:border-blue-100 group"
                     onClick={() => navigate('/profile')}
                     sx={{ mb: 1 }}
                 >
-                    <Avatar 
+                    <Avatar
                         src={user?.avatar_url || undefined}
-                        sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }} 
+                        sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }}
                         className="shadow-md shadow-orange-200 group-hover:scale-110 transition-transform"
                     >
                         {!user?.avatar_url && user?.username.charAt(0).toUpperCase()}
@@ -273,36 +273,36 @@ const MainLayout = () => {
                         >
                             <img src="/logo.png" alt="Menu" style={{ width: 28, height: 28, objectFit: 'contain' }} />
                         </IconButton>
-                        
+
                         <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' }, fontWeight: 800 }}>
                             {getPageTitle()}
                         </Typography>
 
                         <ClickAwayListener onClickAway={() => setShowResults(false)}>
                             <Box sx={{ position: 'relative' }}>
-                                <SearchBox sx={{ ml: { xs: 0, sm: 4} }}>
+                                <SearchBox sx={{ ml: { xs: 0, sm: 4 } }}>
                                     <SearchIconWrapper>
                                         <Search size={20} />
                                     </SearchIconWrapper>
-                                    <StyledInputBase 
-                                        placeholder="Cari Data Kapal atau Nakhoda..." 
-                                        inputProps={{ 'aria-label': 'search' }} 
+                                    <StyledInputBase
+                                        placeholder="Cari Data Kapal atau Nakhoda..."
+                                        inputProps={{ 'aria-label': 'search' }}
                                         value={searchQuery}
                                         onChange={(e) => {
                                             setSearchQuery(e.target.value);
                                             setShowResults(true);
                                         }}
-                                        onFocus={() => { if(searchQuery.trim().length >= 2) setShowResults(true); }}
+                                        onFocus={() => { if (searchQuery.trim().length >= 2) setShowResults(true); }}
                                     />
                                 </SearchBox>
-                                
+
                                 {showResults && searchQuery.trim().length >= 2 && (
-                                    <Paper 
-                                        elevation={8} 
-                                        sx={{ 
-                                            position: 'absolute', top: '100%', left: {xs: 0, sm: 32}, right: 0, 
+                                    <Paper
+                                        elevation={8}
+                                        sx={{
+                                            position: 'absolute', top: '100%', left: { xs: 0, sm: 32 }, right: 0,
                                             mt: 1, maxHeight: 350, overflow: 'auto', borderRadius: 3, zIndex: 50,
-                                            width: {xs: '100vw', sm: '350px'}
+                                            width: { xs: '100vw', sm: '350px' }
                                         }}
                                     >
                                         <List sx={{ p: 0 }}>
@@ -313,13 +313,13 @@ const MainLayout = () => {
                                             ) : searchResults.length > 0 ? (
                                                 searchResults.map((result, idx) => (
                                                     <div key={result.id + idx}>
-                                                        <ListItem 
-                                                            button 
+                                                        <ListItem
+                                                            button
                                                             onClick={() => handleResultClick(result)}
                                                             sx={{ '&:hover': { bgcolor: 'primary.50' }, transition: 'all 0.2s' }}
                                                         >
-                                                            <ListItemText 
-                                                                primary={result.title} 
+                                                            <ListItemText
+                                                                primary={result.title}
                                                                 secondary={result.subtitle}
                                                                 primaryTypographyProps={{ fontWeight: 'bold' }}
                                                             />
@@ -340,7 +340,7 @@ const MainLayout = () => {
                         </ClickAwayListener>
 
                         <Box sx={{ flexGrow: 1 }} />
-                        
+
                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                             <Box className="bg-white border text-blue-700 border-slate-200 shadow-sm rounded-full px-4 py-2 text-sm font-bold flex items-center space-x-2">
                                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
@@ -350,7 +350,7 @@ const MainLayout = () => {
                             {/* Notification Button with Dropdown */}
                             <ClickAwayListener onClickAway={() => setShowNotif(false)}>
                                 <Box sx={{ position: 'relative' }}>
-                                    <IconButton 
+                                    <IconButton
                                         id="notif-btn"
                                         onClick={() => setShowNotif(prev => !prev)}
                                         sx={{ bgcolor: 'white', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}
@@ -432,9 +432,9 @@ const MainLayout = () => {
                                                                             Kapal: <b>{notif.Kapal?.nama_kapal || '-'}</b>
                                                                         </Typography>
                                                                         <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
-                                                                            <Chip 
-                                                                                label="Terlambat Check-in" 
-                                                                                size="small" 
+                                                                            <Chip
+                                                                                label="Terlambat Check-in"
+                                                                                size="small"
                                                                                 color="error"
                                                                                 sx={{ fontWeight: 700, fontSize: '0.7rem', height: 20 }}
                                                                             />
@@ -455,9 +455,9 @@ const MainLayout = () => {
 
                                             {/* Panel Footer */}
                                             <Box sx={{ px: 3, py: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'grey.50', textAlign: 'center' }}>
-                                                <Typography 
-                                                    variant="caption" 
-                                                    color="primary.main" 
+                                                <Typography
+                                                    variant="caption"
+                                                    color="primary.main"
                                                     fontWeight={700}
                                                     sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                                                     onClick={() => { setShowNotif(false); navigate('/laporan'); }}
